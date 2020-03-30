@@ -18,7 +18,7 @@
 <h2 id="abstract">Abstract</h2>
 <p>This SRFI defines two disjoint immutable container types
 known as Maybe and Either,
-both of which can contain at most one object known as their payload.
+each of which can contain at most one object, known as their payload.
 A Maybe object is either a Just object or the unique object Nothing
 (which has no payload); an Either object is either
 a Right object or a Left object.  Maybe represents the concept of an
@@ -189,7 +189,7 @@ true object for success or <code>#f</code> for failure.</p>
 payload is <em>obj</em>.
 This converts the usual Lisp and Scheme protocol of returning
 a true object for success or <code>#f</code> for failure to a Maybe.</p>
-<p><code>(maybe-&gt;values)</code> <em>maybe</em><code>)</code></p>
+<p><code>(maybe-&gt;values</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns its payload; otherwise returns no values.</p>
 <p><code>(maybe-&gt;two-values</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns two values, its payload and <code>#t</code>;
@@ -227,8 +227,8 @@ wrapped in a Left and returned.
 It is an error if <em>producer</em> returns more than two values.</p>
 <h3 id="map-fold-and-unfold">Map, fold and unfold</h3>
 <p><code>(maybe-map</code> <em>proc maybe</em><code>)</code><br><code>(either-map</code> <em>proc either</em><code>)</code></p>
-<p>Monadic map.  If <em>maybe/either</em> is a Just/Right, applies the payload
-to <em>proc</em> and wraps the returned value as a Just/Right; otherwise
+<p>Monadic map.  If <em>maybe/either</em> is a Just/Right, applies
+<em>proc</em> to the payload and wraps the returned value as a Just/Right; otherwise
 returns <em>maybe/either</em>.</p>
 <p><code>(maybe-fold</code> <em>kons nil maybe</em><code>)</code><br><code>(either-fold</code> <em>kons nil either</em><code>)</code></p>
 <p>If <em>maybe/either</em> is a Just/Right, <em>kons</em> is invoked on its
@@ -274,7 +274,7 @@ If all <em>maybes</em> are Nothing, then
 Nothing is returned.
 If there are no arguments, Nothing is returned.</p>
 <h2 id="implementation">Implementation</h2>
-<p>The sample implementation is found in the repository of this SRFI.</p>
+<p>The sample implementation is found in <a href="https://github.com/scheme-requests-for-implementation/srfi-189/">the repository</a> of this SRFI.</p>
 <h2 id="acknowledgements">Acknowledgements</h2>
 <p>The Maybe and Either types and their procedures are based on Scala&#39;s Option
 and Either types, though the name &quot;Maybe&quot; comes from Haskell.
