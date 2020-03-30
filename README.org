@@ -1,0 +1,18 @@
+* SRFI 189: Maybe and Either: optional container types
+
+** by John Cowan (text) and Wolfgang Corcoran-Mathe (sample implementation)
+
+
+
+This repository hosts [[https://srfi.schemers.org/srfi-189/][SRFI 189]]: Maybe and Either: optional container types, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
+
+This SRFI is in /draft/ status.
+
+The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-189/srfi-189.html][SRFI Document]].
+
+If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[https://srfi.schemers.org/srfi-189/][join the SRFI-189 mailing list]] and send your message there.
+
+Thank you.
+
+
+[[mailto:srfi-editors@srfi.schemers.org][The SRFI Editors]]
