@@ -36,18 +36,23 @@
 
           maybe-ref maybe-ref/default either-ref either-ref/default
 
-          maybe-join maybe-bind either-join either-bind
+          maybe-join maybe-bind maybe-compose either-join either-bind
+          either-compose
 
           maybe-length maybe-contains? maybe-filter maybe-remove either-length
           either-contains? either-filter either-remove
+          maybe-sequence either-sequence
 
           maybe->either either->maybe list->maybe list->either maybe->list
           either->list maybe->lisp lisp->maybe maybe->values maybe->two-values
           values->maybe either->values either->two-values values->either
+          maybe-for-each either-for-each
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
           either-unfold
 
-          tri-not tri=? tri-and tri-or tri-merge)
+          tri-not tri=? tri-and tri-or tri-merge
+
+          maybe-if)
 
   (include "189.scm"))
