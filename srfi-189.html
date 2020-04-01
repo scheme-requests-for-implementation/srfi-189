@@ -184,16 +184,16 @@ return <code>#t</code>; otherwise, return <code>#f</code>.</p>
 <p>If <em>maybe/either</em> is a Just/Right and its payload
 satisfies / does not satisfy <em>pred</em>,
 return <em>maybe</em>; otherwise, returns Nothing / a Left of <em>obj</em>.</p>
-<p><code>(maybe-sequence</code> <em>container for-each constructor</em><code>)</code><br>
-<code>(either-sequence</code> <em>container for-each constructor obj</em><code>)</code></p>
-<p>Uses <em>for-each</em> to traverse <em>container</em>, which may be any object
+<p><code>(maybe-sequence</code> <em>container map</em><code>)</code><br>
+<code>(either-sequence</code> <em>container map obj</em><code>)</code></p>
+<p>Uses <em>map</em> to traverse <em>container</em>, which may be any object
 whose elements are Maybes/Eithers.
 If all the elements are Justs/Rights, then applies <em>constructor</em>
 to their payloads in order and wraps the result in a Just/Right.
-For example, a list of Justs becomes a Just list if given the arguments
-<code>list</code> and <code>for-each</code>,
-and a vector of Rights becomes a Right vector if given the arguments
-<code>vector</code> and <code>vector-for-each</code>.
+For example, a list of Justs becomes a Just list if given the argument
+<code>map</code>,
+and a vector of Rights becomes a Right vector if given the argument
+<code>vector-map</code>.
 
 <p>But if any of the elements are Nothing/Left, a Nothing / Left of <em>obj</em>
 is returned.</p>
@@ -276,8 +276,8 @@ returns <em>maybe/either</em>.</p>
 <p><code>(maybe-for-each</code> <em>proc maybe</em><code>)</code><br>
 
 <code>(either-for-each</code> <em>proc either</em><code>)</code></p>
-<p>If <em>maybe/either</em> is a Just/Right, applies the payload
-to <em>proc</em> and discards the result; otherwise does nothing.
+<p>If <em>maybe/either</em> is a Just/Right, applies <em>proc</em>
+to the payload and discards the result; otherwise does nothing.
 Returns an unspecified result.</p>
 <p><code>(maybe-fold</code> <em>kons nil maybe</em><code>)</code><br>
 

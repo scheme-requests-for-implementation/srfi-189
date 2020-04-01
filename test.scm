@@ -156,6 +156,14 @@
     (check (nothing? (maybe-bind (just #t) mp (lambda (_) (nothing)) mp))
       => #t))
 
+  ;; maybe-compose
+  (check (nothing? ((maybe-compose just) (nothing)))              => #t)
+  (check (maybe= eqv? (just #t) ((maybe-compose just) (just #t))) => #t)
+
+  (let ((mp (lambda (b) (just (not b)))))
+    (check (maybe= eqv? (just #t) ((maybe-compose mp mp mp) (just #f)))
+      => #t))
+
   ;; either-bind
   (check (left? (either-bind (left #f) right)) => #t)
 
@@ -172,7 +180,15 @@
 
   (let ((ep (lambda (b) (right (not b)))))
     (check (either= eqv? (right #f) (either-bind (right #t) ep ep ep))  => #t)
-    (check (either= eqv? (left #f) (either-bind (right #t) ep left ep)) => #t)))
+    (check (either= eqv? (left #f) (either-bind (right #t) ep left ep)) => #t))
+
+  ;; either-compose
+  (check (left? ((either-compose right) (left 'z)))                    => #t)
+  (check (either= eqv? (right #t) ((either-compose right) (right #t))) => #t)
+
+  (let ((ep (lambda (b) (right (not b)))))
+    (check (either= eqv? (right #t) ((either-compose ep ep ep) (right #f)))
+      => #t)))
 
 ;;; Sequence operations
 
@@ -201,29 +217,41 @@
   (check (nothing? (maybe-remove always (just #t)))              => #t)
   (check (nothing? (maybe-remove always (nothing)))              => #t)
 
-  ;; either-filter & either-remove
-  (check (either= eqv? (right #t) (either-filter always (right #t) #f)) => #t)
-  (check (left-of-z? (either-filter never (right #t) 'z))               => #t)
-  (check (left-of-z? (either-filter always (left #t) 'z))               => #f)
+  ;; maybe-sequence
+  (check (maybe= equal? (maybe-sequence (map just (list 1 2)) map)
+                        (just (list 1 2)))                          => #t)
+  (check (nothing? (maybe-sequence (list (just #t) (nothing)) map)) => #t)
 
-  (check (either= eqv? (right #t) (either-remove never (right #t))) => #t)
-  (check (left-of-z? (either-remove always (right #t) 'z))          => #t)
-  (check (left-of-z? (either-remove never (left #t) 'z))           => #t))
+  ;; either-filter & either-remove
+  (check (either= eqv? (right #t) (either-filter always (right #t) 'z)) => #t)
+  (check (left-of-z? (either-filter never (right #t) 'z))               => #t)
+  (check (left-of-z? (either-filter always (left #t) 'z))               => #t)
+
+  (check (either= eqv? (right #t) (either-remove never (right #t) 'z)) => #t)
+  (check (left-of-z? (either-remove always (right #t) 'z))             => #t)
+  (check (left-of-z? (either-remove never (left #t) 'z))               => #t)
+
+  ;; either-sequence
+  (check (either= equal? (either-sequence (map right (list 1 2)) map #f)
+                         (right (list 1 2)))
+    => #t)
+  (check (left-of-z? (either-sequence (list (right #t) (left #t)) map 'z))
+    => #t))
 
 ;;; Conversion procedures
 
 (define (check-conversions)
   ;; maybe->either and either->maybe
   (check (left-of-z? (maybe->either (nothing) 'z))           => #t)
-  (check (either= eqv? (right #t) (maybe->either (just #t))) => #t)
+  (check (either= eqv? (right #t) (maybe->either (just #t) 'z)) => #t)
   (check (nothing? (either->maybe (left #t)))                => #t)
   (check (maybe= eqv? (just #t) (either->maybe (right #t)))  => #t)
 
   ;; list->maybe and list->either
   (check (nothing? (list->maybe '()))                   => #t)
   (check (maybe= eqv? (just #t) (list->maybe '(#t)))    => #t)
-  (check (left-of-z? (list->either '()))                => #t)
-  (check (either= eqv? (right #t) (list->either '(#t))) => #t)
+  (check (left-of-z? (list->either '() 'z))             => #t)
+  (check (either= eqv? (right #t) (list->either '(#t) 'z)) => #t)
 
   ;; maybe->list and either->list
   (check (maybe->list (nothing))   => '())
@@ -258,7 +286,7 @@
     => '(#t #f))
   (check (call-with-values (lambda () (either->two-values (right #t))) list)
     => '(#t #t))
-  (check (left-of-z? (values->either (lambda () (values))))        => #t)
+  (check (left-of-nothing? (values->either (lambda () (values))))  => #t)
   (check (either= eqv? (right #t) (values->either (lambda () #t))) => #t)
   (check (either= eqv? (right #t) (values->either (lambda () (values #t #t))))
     => #t)
@@ -277,6 +305,28 @@
     (check (eqv? e-left (either-map not e-left)) => #t))
   (check (either= eqv? (right #f) (either-map not (right #t))) => #t)
 
+  ;; maybe-for-each
+  (check (let ((x #f))
+           (maybe-for-each (lambda (y) (set! x y)) (just #t))
+           x)
+    => #t)
+  ; Given Nothing, ensure the proc argument is not executed.
+  (check (let ((x #f))
+           (maybe-for-each (lambda (_) (set! x #t)) (nothing))
+           x)
+    => #f)
+
+  ;; either-for-each
+  (check (let ((x #f))
+           (either-for-each (lambda (y) (set! x y)) (right #t))
+           x)
+    => #t)
+  ; Given a Left, ensure the proc argument is not executed.
+  (check (let ((x #f))
+           (either-for-each (lambda (_) (set! x #t)) (left 'z))
+           x)
+    => #f)
+
   (check (maybe-fold cons '() (nothing)) => '())
   (check (maybe-fold cons '() (just #t)) => '(#t))
 
@@ -286,7 +336,7 @@
   (check (nothing? (maybe-unfold always not #f #f))              => #t)
   (check (maybe= eqv? (just #t) (maybe-unfold never not #f #f))  => #t)
 
-  (check (left-of-nothing? (either-unfold always not #f #f))         => #t)
+  (check (left-of-z? (either-unfold always not #f 'z))               => #t)
   (check (either= eqv? (right #t) (either-unfold never not #f #f))   => #t))
 
 ;;; Trivalent logic

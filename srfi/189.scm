@@ -123,16 +123,23 @@
              (lambda () maybe)
              (lambda (obj) (if (maybe? obj) obj maybe))))
 
-(define (maybe-bind maybe . mprocs)
+(define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
-  (call-with-current-continuation
-   (lambda (return)
-     (fold (lambda (mproc m)
-             (if (nothing? m)
-                 (return m)
-                 (mproc (just-obj m))))
-           maybe
-           mprocs))))
+  (if (null? mprocs)
+      (maybe-ref maybe (lambda () (nothing)) mproc)  ; fast path
+      (let lp ((m maybe) (mp mproc) (mprocs mprocs))
+        (maybe-ref m
+                   (lambda () (nothing))
+                   (lambda (obj)
+                     (if (null? mprocs)
+                         (mp obj)  ; tail-call last
+                         (lp (mp obj) (car mprocs) (cdr mprocs))))))))
+
+(define (maybe-compose . mprocs)
+  (assume (pair? mprocs))
+  (lambda (maybe)
+    (assume (maybe? maybe))
+    (apply maybe-bind maybe mprocs)))
 
 (define (either-join either)
   (assume (either? either))
@@ -140,16 +147,24 @@
               (const either)
               (lambda (obj) (if (either? obj) obj either))))
 
-(define (either-bind either . eprocs)
+(define (either-bind either mproc . mprocs)
   (assume (either? either))
-  (call-with-current-continuation
-   (lambda (return)
-     (fold (lambda (eproc e)
-             (if (left? e)
-                 (return e)
-                 (eproc (right-obj e))))
-           either
-           eprocs))))
+  (if (null? mprocs)
+      (either-ref either (const either) mproc)  ; fast path
+      (let lp ((e either) (ep mproc) (mprocs mprocs))
+        (either-ref e
+                    (const e)
+                    (lambda (obj)
+                      (if (null? mprocs)
+                          (ep obj)  ; tail-call last
+                          (lp (ep obj) (car mprocs) (cdr mprocs))))))))
+
+
+(define (either-compose . mprocs)
+  (assume (pair? mprocs))
+  (lambda (either)
+    (assume (either? either))
+    (apply either-bind either mprocs)))
 
 
 ;;; Sequence operations
@@ -174,6 +189,14 @@
   (assume (procedure? pred))
   (assume (maybe? maybe))
   (maybe-bind maybe (lambda (x) (if (not (pred x)) maybe (nothing)))))
+
+(define (maybe-sequence container cmap)
+  (assume (procedure? cmap))
+  (call-with-current-continuation
+   (lambda (return)
+     (just (cmap (lambda (m)
+                   (maybe-ref m (lambda () (return m))))
+                 container)))))
 
 (define (either-length either)
   (assume (either? either))
@@ -202,6 +225,14 @@
               (lambda (x)
                 (if (pred x) (left obj) either))))
 
+(define (either-sequence container cmap obj)
+  (assume (procedure? cmap))
+  (call-with-current-continuation
+   (lambda (return)
+     (right (cmap (lambda (e)
+                    (either-ref e (const (return (left obj)))))
+                  container)))))
+
 ;;; Conversion
 
 (define (maybe->either maybe obj)
@@ -216,9 +247,9 @@
   (assume (list? lis))
   (if (null? lis) (nothing) (just (car lis))))
 
-(define (list->either lis)
+(define (list->either lis obj)
   (assume (list? lis))
-  (if (null? lis) (left (nothing)) (right (car lis))))
+  (if (null? lis) (left obj) (right (car lis))))
 
 (define (maybe->list maybe)
   (assume (maybe? maybe))
@@ -282,6 +313,11 @@
   (assume (maybe? maybe))
   (maybe-bind maybe (lambda (obj) (just (proc obj)))))
 
+(define (maybe-for-each proc maybe)
+  (assume (procedure? proc))
+  (assume (maybe? maybe))
+  (maybe-bind maybe (lambda (obj) (proc obj))))
+
 (define (maybe-fold kons nil maybe)
   (assume (procedure? kons))
   (assume (maybe? maybe))
@@ -301,6 +337,11 @@
   (assume (either? either))
   (either-bind either (lambda (obj) (right (proc obj)))))
 
+(define (either-for-each proc either)
+  (assume (procedure? proc))
+  (assume (either? either))
+  (either-bind either (lambda (obj) (proc obj))))
+
 (define (either-fold kons nil either)
   (assume (procedure? kons))
   (assume (either? either))
@@ -314,6 +355,14 @@
   (assume (procedure? stop?))
   (assume (procedure? mapper))
   (if (stop? seed) (left seed) (right (mapper seed))))
+
+;; Conditional syntax
+
+(define-syntax maybe-if
+  (syntax-rules ()
+    ((maybe-expr just-expr nothing-expr)
+     (let ((maybe-expr maybe-expr))
+       (if (just? maybe-expr) just-expr nothing-expr)))))
 
 ;;; Trivalent logic
 
@@ -330,10 +379,10 @@
 ;; is Nothing or if any two arguments have different (tri-)truth values,
 ;; #f is returned.
 (define (tri=? maybe . ms)
-   (define (make-pred b)
-     (lambda (m)
-       (assume (maybe? m))
-       (and (just? m) (eqv? (just->boolean m) b))))
+  (define (make-pred b)
+    (lambda (m)
+      (assume (maybe? m))
+      (and (just? m) (eqv? (just->boolean m) b))))
 
   (if (nothing? maybe)
       (just #f)
