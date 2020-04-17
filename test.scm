@@ -265,6 +265,12 @@
   (check (nothing? (lisp->maybe #f))              => #t)
   (check (maybe= eqv? (lisp->maybe #t) (just #t)) => #t)
 
+  ;; maybe->eof and eof->maybe
+  (check (eof-object? (maybe->eof (nothing)))    => #t)
+  (check (maybe->eof (just #t))                  => #t)
+  (check (nothing? (eof->maybe (eof-object)))    => #t)
+  (check (maybe= eqv? (eof->maybe #t) (just #t)) => #t)
+
   ;; maybe->values and friends
   (check (maybe->values (just #t)) => #t)
   (check (call-with-values (lambda () (maybe->two-values (nothing))) list)

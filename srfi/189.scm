@@ -268,6 +268,12 @@
 (define (lisp->maybe obj)
   (if obj (just obj) (nothing)))
 
+(define (maybe->eof maybe)
+  (maybe-ref/default maybe (eof-object)))
+
+(define (eof->maybe obj)
+  (if (eof-object? obj) (nothing) (just obj)))
+
 (define (maybe->values maybe)
   (assume (maybe? maybe))
   (maybe-ref maybe values values))
