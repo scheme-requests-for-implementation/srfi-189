@@ -46,7 +46,7 @@
           maybe->either either->maybe list->maybe list->either maybe->list
           either->list maybe->lisp lisp->maybe maybe->values maybe->two-values
           values->maybe either->values either->two-values values->either
-          maybe-for-each either-for-each
+          maybe-for-each either-for-each maybe->eof eof->maybe
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
           either-unfold
