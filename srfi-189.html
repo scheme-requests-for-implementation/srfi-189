@@ -281,8 +281,9 @@ Returns an unspecified result.</p>
 <p><code>(maybe-fold</code> <em>kons nil maybe</em><code>)</code><br>
 
 <code>(either-fold</code> <em>kons nil either</em><code>)</code></p>
-<p>If <em>maybe/either</em> is a Just/Right, <em>kons</em> is invoked on its
-payload and <em>nil</em> and the result returned; otherwise, <em>nil</em> is returned.</p>
+<p>If <em>maybe/either</em> is a Just/Right, <em>kons</em> is invoked
+on the values of its payload and the additional value <em>nil</em>
+and the result returned; otherwise, <em>nil</em> is returned.</p>
 <p><code>(maybe-unfold</code> <em>stop? mapper successor seed</em><code>)</code><br>
 <code>(either-unfold</code> <em>stop? mapper successor seed</em><code>)</code></p>
 <p>If <em>stop?</em> returns true on <em>seed</em>, a Nothing / a Left of <em>seed</em> is returned;
