@@ -98,6 +98,7 @@
     (if (just? maybe) (success (just-obj maybe)) (failure)))))
 
 (define (maybe-ref/default maybe default)
+  (assume (maybe? maybe))
   (if (just? maybe) (just-obj maybe) default))
 
 (define either-ref
@@ -113,6 +114,7 @@
         (failure (left-obj either))))))
 
 (define (either-ref/default either default)
+  (assume (either? either))
   (if (right? either) (right-obj either) default))
 
 ;;; Join and bind
