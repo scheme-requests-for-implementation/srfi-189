@@ -202,8 +202,8 @@ to the values of each payload, and then <em>outer-constructor</em>
 to the results of all the calls to <em>inner-constructor</em>,
 and finally wraps the result of <em>outer-constructor</em> in a Just/Right.</p>
 <p>For example, a list of Justs becomes a Just list of lists if 
-if the mapper is <em>map</em> and the inner and outer constructors
-are <em>list</em>.
+the mapper is <em>map</em> and the inner and outer constructors
+are <em>list</em>,
 and a vector of Rights containing one value each becomes
 a Right vector if given the mapper is <code>vector-map</code>,
 the inner constructor is <code>identity</code>, and the
