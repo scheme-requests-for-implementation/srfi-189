@@ -128,10 +128,10 @@
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
   (if (null? mprocs)
-      (maybe-ref maybe (lambda () (nothing)) mproc)  ; fast path
+      (maybe-ref maybe nothing mproc)  ; fast path
       (let lp ((m maybe) (mp mproc) (mprocs mprocs))
         (maybe-ref m
-                   (lambda () (nothing))
+                   nothing
                    (lambda (obj)
                      (if (null? mprocs)
                          (mp obj)  ; tail-call last
@@ -185,12 +185,12 @@
 (define (maybe-filter pred maybe)
   (assume (procedure? pred))
   (assume (maybe? maybe))
-  (maybe-bind maybe (lambda (x) (if (pred x) maybe (nothing)))))
+  (maybe-bind maybe (lambda (x) (if (pred x) maybe nothing-obj))))
 
 (define (maybe-remove pred maybe)
   (assume (procedure? pred))
   (assume (maybe? maybe))
-  (maybe-bind maybe (lambda (x) (if (not (pred x)) maybe (nothing)))))
+  (maybe-bind maybe (lambda (x) (if (not (pred x)) maybe nothing-obj))))
 
 (define (maybe-sequence container cmap)
   (assume (procedure? cmap))
@@ -243,11 +243,11 @@
 
 (define (either->maybe either)
   (assume (either? either))
-  (either-ref either (const (nothing)) just))
+  (either-ref either (const nothing-obj) just))
 
 (define (list->maybe lis)
   (assume (list? lis))
-  (if (null? lis) (nothing) (just (car lis))))
+  (if (null? lis) nothing-obj (just (car lis))))
 
 (define (list->either lis obj)
   (assume (list? lis))
@@ -268,13 +268,13 @@
 
 ;; Converts the usual Lisp "true object or #f" protocol to a Maybe.
 (define (lisp->maybe obj)
-  (if obj (just obj) (nothing)))
+  (if obj (just obj) nothing-obj))
 
 (define (maybe->eof maybe)
   (maybe-ref/default maybe (eof-object)))
 
 (define (eof->maybe obj)
-  (if (eof-object? obj) (nothing) (just obj)))
+  (if (eof-object? obj) nothing-obj (just obj)))
 
 (define (maybe->values maybe)
   (assume (maybe? maybe))
@@ -291,9 +291,9 @@
   (call-with-values
    producer
    (case-lambda
-    (() (nothing))
+    (() nothing-obj)
     ((x) (just x))
-    ((x b) (if b (just x) (nothing))))))
+    ((x b) (if b (just x) nothing-obj)))))
 
 (define (either->values either)
   (assume (either? either))
@@ -310,7 +310,7 @@
   (call-with-values
    producer
    (case-lambda
-    (() (left (nothing)))
+    (() (left nothing-obj))
     ((x) (right x))
     ((x b) (if b (right x) (left x))))))
 
@@ -338,7 +338,7 @@
 (define (maybe-unfold stop? mapper successor seed)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
-  (if (stop? seed) (nothing) (just (mapper seed))))
+  (if (stop? seed) nothing-obj (just (mapper seed))))
 
 (define (either-map proc either)
   (assume (procedure? proc))
@@ -418,4 +418,4 @@
 ;; If all arguments are Nothing, then return Nothing.  Otherwise,
 ;; return the first Just value.
 (define (tri-merge . maybes)
-  (or (find just? maybes) (nothing)))
+  (or (find just? maybes) nothing-obj))
