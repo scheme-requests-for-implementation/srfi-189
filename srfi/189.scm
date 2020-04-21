@@ -212,12 +212,13 @@
               (lambda objs
                 (if (apply pred objs) nothing-obj maybe))))
 
-(define (maybe-sequence container cmap)
+(define (maybe-sequence container cmap aggregator)
   (assume (procedure? cmap))
+  (assume (procedure? aggregator))
   (call-with-current-continuation
    (lambda (return)
      (just (cmap (lambda (m)
-                   (maybe-ref m (lambda () (return m))))
+                   (maybe-ref m (lambda () (return m)) aggregator))
                  container)))))
 
 (define (either-length either)
@@ -241,12 +242,13 @@
                 (if (apply pred objs) left-of-no-values either))))
 
 ;; FIXME: Same questions as maybe-sequence.
-(define (either-sequence container cmap obj)
+(define (either-sequence container cmap aggregator)
   (assume (procedure? cmap))
+  (assume (procedure? aggregator))
   (call-with-current-continuation
    (lambda (return)
      (right (cmap (lambda (e)
-                    (either-ref e (const (return (left obj)))))
+                    (either-ref e (const (return e)) aggregator))
                   container)))))
 
 ;;; Conversion
