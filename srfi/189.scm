@@ -225,7 +225,7 @@
   (assume (either? either))
   (if (right? either) 1 0))
 
-(define (either-filter pred either obj)
+(define (either-filter pred either)
   (assume (procedure? pred))
   (assume (either? either))
   (either-ref either
@@ -233,7 +233,7 @@
               (lambda objs
                 (if (apply pred objs) either left-of-no-values))))
 
-(define (either-remove pred either obj)
+(define (either-remove pred either)
   (assume (procedure? pred))
   (assume (either? either))
   (either-ref either
