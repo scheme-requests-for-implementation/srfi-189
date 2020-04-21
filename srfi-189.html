@@ -221,7 +221,8 @@ of <em>list</em>.</p>
 <p><code>(maybe-&gt;list</code> <em>maybe</em><code>)</code><br>
 <code>(either-&gt;list</code> <em>either</em><code>)</code></p>
 <p>Returns a list whose elements are the payload of <em>maybe/either</em>;
-if <em>maybe</em> is Nothing, returns the empty list.</p>
+if <em>maybe</em> is Nothing, returns the empty list.
+It is an error to mutate the result of this procedure.</p>
 <p><code>(maybe-&gt;lisp</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns its payload; otherwise returns <code>#f</code>.
 This converts a Maybe to the usual Lisp and Scheme protocol of returning a
