@@ -191,25 +191,21 @@ of the container and not on the number of objects it contains.</p>
 <p>If <em>maybe/either</em> is a Just/Right and the values of its payload
 satisfy / does not satisfy <em>pred</em>,
 return <em>maybe</em>; otherwise, returns Nothing / a Left of no values.</p>
-<p><code>(maybe-sequence</code> <em>container mapper
-outer-constructor inner-constructor</em><code>)</code><br>
-<code>(either-sequence</code> <em>container mapper
-outer-constructor inner-constructor</em><code>)</code></p>
-<p>Uses <em>mapper</em> to traverse <em>container</em>, which may be any object
-whose elements are Maybes/Eithers.
-If all the elements are Justs/Rights, then applies <em>inner-constructor</em>
-to the values of each payload, and then <em>outer-constructor</em>
-to the results of all the calls to <em>inner-constructor</em>,
-and finally wraps the result of <em>outer-constructor</em> in a Just/Right.</p>
+<p><code>(maybe-sequence</code> <em>traversable mapper aggregator</em><code>)</code><br>
+<code>(either-sequence</code> <em>traversable map aggregator</em><code>)</code></p>
+<p>Uses <em>map</em> to process the elements of <em>traversable</em>,
+which may be any object whose elements are Maybes/Eithers.
+The <em>aggregator</em> function is applied to the values of each
+element of <em>traversable</em> in turn, and <em>map</em> is used to
+construct the new traversable.  If all the elements are Just/Right,
+the new traversable is wrapped in a Just/Right and returned.</p>
 <p>For example, a list of Justs becomes a Just list of lists if 
-if the mapper is <em>map</em> and the inner and outer constructors
-are <em>list</em>.
-and a vector of Rights containing one value each becomes
-a Right vector if given the mapper is <code>vector-map</code>,
-the inner constructor is <code>identity</code>, and the
-outer constructor is <code>vector</code>.</p> 
+if the map procedure is <code>map</code> and the aggregator is <code>list</code>.
+In the same way, a vector of Rights containing one value each becomes
+a Right vector if the map procedure is <code>vector-map</code>
+and the aggregator is <code>identity</code>.</p>
 <p>But if any of the elements are Nothing/Left, the first such element
-is returned.</p>
+is returned immediately.</p>
 <h3 id="conversion">Conversion</h3>
 <p><code>(maybe-&gt;either</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns a Right with the same payload
