@@ -50,9 +50,20 @@
 
 ;;; Utility
 
+(define (identity x) x)
+
 (define-syntax constantly
   (syntax-rules ()
-    ((_ obj) (lambda (_) obj))))
+    ((_ obj) (lambda _ obj))))
+
+(define-syntax catch-exceptions
+  (syntax-rules ()
+    ((_ expr)
+     (call-with-current-continuation
+      (lambda (k)
+        (with-exception-handler
+         (lambda (_) (k 'exception))
+         (lambda () expr)))))))
 
 (define always (constantly #t))
 (define never (constantly #f))
@@ -72,7 +83,8 @@
 
   ;; either-swap
   (check (either= eqv? (left #t) (either-swap (right #t))) => #t)
-  (check (either= eqv? (right #t) (either-swap (left #t))) => #t))
+  (check (either= eqv? (right #t) (either-swap (left #t))) => #t)
+)
 
 ;;; Predicates
 
@@ -96,79 +108,127 @@
   (check (maybe= eqv? (nothing) (nothing)) => #t)
   (check (maybe= eqv? (just #t) (nothing)) => #f)
 
+  (check (maybe= eqv? (just #t #f) (just #t #f)) => #t)
+  (check (maybe= eqv? (just #t #f) (just #t 'z)) => #f)
+  (check (maybe= eqv? (just #t #f) (just #t))    => #f)
+
   (check (either= eqv? (right #t) (right #t)) => #t)
   (check (either= eqv? (right #t) (right #f)) => #f)
   (check (either= eqv? (left #t) (left #t))   => #t)
   (check (either= eqv? (left #t) (left #f))   => #f)
-  (check (either= eqv? (right #t) (left #t))  => #f))
+  (check (either= eqv? (right #t) (left #t))  => #f)
+
+  (check (either= eqv? (right #t #f) (right #t #f)) => #t)
+  (check (either= eqv? (right #t #f) (right #t 'z)) => #f)
+  (check (either= eqv? (right #t #f) (right #t))    => #f)
+  (check (either= eqv? (left #t #f) (left #t #f))   => #t)
+  (check (either= eqv? (left #t #f) (left #t 'z))   => #f)
+  (check (either= eqv? (left #t #f) (left #t))      => #f)
+)
 
 ;;; Accessors
 
 (define (check-accessors)
   (check (maybe-ref (just #t))                       => #t)
+  (check (catch-exceptions (maybe-ref (nothing)))    => 'exception)
   (check (maybe-ref (nothing) (lambda () #f))        => #f)
   (check (maybe-ref (just #t) (lambda () #f) values) => #t)
   (check (maybe-ref (nothing) (lambda () #f) values) => #f)
 
+  (check (let-values ((vals (maybe-ref (just #t #f)))) vals) => '(#t #f))
+  (check (maybe-ref (just #t #f) (lambda () #f) list)        => '(#t #f))
+
   (check (either-ref (right #t))                        => #t)
-  (check (either-ref (left #t) (lambda (_) #f))         => #f)
-  (check (either-ref (right #t) (lambda (_) #f) values) => #t)
-  (check (either-ref (left #t) values (lambda (_) #f))  => #t)
+  (check (catch-exceptions (either-ref (left #t)))      => 'exception)
+  (check (either-ref (left #t) (constantly #f))         => #f)
+  (check (either-ref (right #t) (constantly #f) values) => #t)
+  (check (either-ref (left #t) values (constantly #f))  => #t)
+
+  (check (let-values ((vals (either-ref (right #t #f)))) vals) => '(#t #f))
+  (check (either-ref (right #t #f) (constantly #f) list)       => '(#t #f))
+  (check (either-ref (left #t #f) (constantly #f) list)        => #f)
 
   (check (maybe-ref/default (just #t) #f) => #t)
   (check (maybe-ref/default (nothing) #f) => #f)
+  (check (let-values ((vals (maybe-ref/default (just #t #t) #f #f)))
+           vals)
+    => '(#t #t))
+  (check (let-values ((vals (maybe-ref/default (nothing) #f #f)))
+           vals)
+    => '(#f #f))
 
   (check (either-ref/default (right #t) #f) => #t)
-  (check (either-ref/default (left #t) #f)  => #f))
+  (check (either-ref/default (left #t) #f)  => #f)
+  (check (let-values ((vals (either-ref/default (right #t #t) #f #f)))
+           vals)
+    => '(#t #t))
+  (check (let-values ((vals (either-ref/default (left #t) #f #f)))
+           vals)
+    => '(#f #f))
+)
 
 ;;; Join and bind
 
 (define (check-join-and-bind)
   ;; maybe-join
   (check (maybe= eqv? (maybe-join (just (just #t))) (just #t)) => #t)
-  (check (maybe= eqv? (maybe-join (just #t)) (just #t))        => #t)
   (check (nothing? (maybe-join (just (nothing))))              => #t)
   (check (nothing? (maybe-join (nothing)))                     => #t)
+  (check (catch-exceptions (maybe-join (just #t)))             => 'exception)
+  (check (catch-exceptions (maybe-join (just (just #t) (just #t))))
+    => 'exception)
 
   ;; either-join
   (check (either= eqv? (either-join (right (right #t))) (right #t)) => #t)
   (check (either= eqv? (either-join (right (left #t))) (left #t))   => #t)
-  (check (either= eqv? (either-join (right #t)) (right #t))         => #t)
   (check (either= eqv? (either-join (left #t)) (left #t))           => #t)
+  (check (catch-exceptions (either-join (right #t)))
+    => 'exception)
+  (check (catch-exceptions (either-join (right (right #t) (right #t))))
+    => 'exception)
 
   ;; maybe-bind
   (check (nothing? (maybe-bind (nothing) just)) => #t)
 
-  (let ((m (just #t)))
-    (check (maybe= eqv? m (maybe-bind m just)) => #t))
+  (check (let ((m (just #t)))
+           (maybe= eqv? m (maybe-bind m just)))
+    => #t)
+
+  (check (let ((m (just #t #f)))
+           (maybe= eqv? m (maybe-bind m just)))
+    => #t)
 
   (let ((k (lambda (n) (just (* n 2))))
         (h (lambda (n) (just (+ n 5))))
         (m (just 1)))
-    (check
-     (maybe= eqv? (maybe-bind m (lambda (n) (maybe-bind (k n) h)))
-                  (maybe-bind (maybe-bind m k) h))
-     => #t))
+    (check (maybe= eqv?
+                   (maybe-bind m (lambda (n) (maybe-bind (k n) h)))
+                   (maybe-bind (maybe-bind m k) h))
+      => #t))
 
-  (let ((mp (lambda (b) (just (not b)))))
-    (check (maybe= eqv? (just #f) (maybe-bind (just #t) mp mp mp))
-      => #t)
-    (check (nothing? (maybe-bind (just #t) mp (lambda (_) (nothing)) mp))
+  (let ((neg (lambda (b) (just (not b)))))
+    (check (maybe= eqv? (just #f) (maybe-bind (just #t) neg neg neg)) => #t)
+    (check (nothing? (maybe-bind (just #t) neg (constantly (nothing)) neg))
       => #t))
 
   ;; maybe-compose
   (check (nothing? ((maybe-compose just) (nothing)))              => #t)
   (check (maybe= eqv? (just #t) ((maybe-compose just) (just #t))) => #t)
 
-  (let ((mp (lambda (b) (just (not b)))))
-    (check (maybe= eqv? (just #t) ((maybe-compose mp mp mp) (just #f)))
+  (let ((neg (lambda (b) (just (not b)))))
+    (check (maybe= eqv? (just #t) ((maybe-compose neg neg neg) (just #f)))
       => #t))
 
   ;; either-bind
   (check (left? (either-bind (left #f) right)) => #t)
 
-  (let ((e (right #t)))
-    (check (either= eqv? e (either-bind e right)) => #t))
+  (check (let ((e (right #t)))
+           (either= eqv? e (either-bind e right)))
+    => #t)
+
+  (check (let ((e (right #t #f)))
+           (either= eqv? e (either-bind e right)))
+    => #t)
 
   (let ((k (lambda (n) (right (* n 2))))
         (h (lambda (n) (right (+ n 5))))
@@ -178,17 +238,18 @@
                    (either-bind (either-bind e k) h))
      => #t))
 
-  (let ((ep (lambda (b) (right (not b)))))
-    (check (either= eqv? (right #f) (either-bind (right #t) ep ep ep))  => #t)
-    (check (either= eqv? (left #f) (either-bind (right #t) ep left ep)) => #t))
+  (let ((neg (lambda (b) (right (not b)))))
+    (check (either= eqv? (right #f) (either-bind (right #t) neg neg neg)) => #t)
+    (check (either= eqv? (left #f) (either-bind (right #t) neg left neg)) => #t))
 
   ;; either-compose
   (check (left? ((either-compose right) (left 'z)))                    => #t)
   (check (either= eqv? (right #t) ((either-compose right) (right #t))) => #t)
 
-  (let ((ep (lambda (b) (right (not b)))))
-    (check (either= eqv? (right #t) ((either-compose ep ep ep) (right #f)))
-      => #t)))
+  (let ((neg (lambda (b) (right (not b)))))
+    (check (either= eqv? (right #t) ((either-compose neg neg neg) (right #f)))
+      => #t))
+)
 
 ;;; Sequence operations
 
