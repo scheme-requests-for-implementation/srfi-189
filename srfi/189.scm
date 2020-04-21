@@ -198,11 +198,6 @@
   (assume (maybe? maybe))
   (if (just? maybe) 1 0))
 
-(define (maybe-contains? equal maybe . objs)
-  (assume (procedure? equal))
-  (assume (maybe? maybe))
-  (maybe= equal maybe (raw-just objs)))
-
 (define (maybe-filter pred maybe)
   (assume (procedure? pred))
   (assume (maybe? maybe))
@@ -228,13 +223,6 @@
 (define (either-length either)
   (assume (either? either))
   (if (right? either) 1 0))
-
-(define (either-contains? equal either obj)
-  (assume (procedure? equal))
-  (assume (either? either))
-  (either-ref either
-              (const #f)
-              (lambda (x) (equal x obj))))
 
 (define (either-filter pred either obj)
   (assume (procedure? pred))
