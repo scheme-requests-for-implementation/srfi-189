@@ -322,7 +322,7 @@
 (define (either->lisp-values either)
   (assume (either? either))
   (either-ref either
-              (lambda () (values #f #f))
+              (const (values #f #f))
               (lambda objs
                 (apply values (append objs '(#t))))))
 
