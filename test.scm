@@ -199,14 +199,6 @@
   (check (either-length (left #t))  => 0)
   (check (either-length (right #t)) => 1)
 
-  (check (maybe-contains? eqv? (nothing) #t) => #f)
-  (check (maybe-contains? eqv? (just #f) #t) => #f)
-  (check (maybe-contains? eqv? (just #t) #t) => #t)
-
-  (check (either-contains? eqv? (left #t) #t)  => #f)
-  (check (either-contains? eqv? (right #f) #t) => #f)
-  (check (either-contains? eqv? (right #t) #t) => #t)
-
   ;; maybe-filter
   (check (maybe= eqv? (just #t) (maybe-filter always (just #t))) => #t)
   (check (nothing? (maybe-filter never (just #t)))               => #t)
