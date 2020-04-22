@@ -394,10 +394,14 @@
   (check (nothing? (maybe-map not (nothing)))              => #t)
   (check (maybe= eqv? (just #f) (maybe-map not (just #t))) => #t)
 
+  (check (maybe= eqv? (just #t #f) (maybe-map values (just #t #f))) => #t)
+
   ;; either-map
-  (let ((e-left (left #t)))
-    (check (eqv? e-left (either-map not e-left)) => #t))
+  ; Verify that the result is the same Left (in the sense of eqv?).
+  (check (let ((e (left #t))) (eqv? e (either-map not e)))     => #t)
   (check (either= eqv? (right #f) (either-map not (right #t))) => #t)
+
+  (check (let ((e (right #t #f))) (either= eqv? e (either-map values e))) => #t)
 
   ;; maybe-for-each
   (check (let ((x #f))
@@ -423,15 +427,18 @@
 
   (check (maybe-fold cons '() (nothing)) => '())
   (check (maybe-fold cons '() (just #t)) => '(#t))
+  (check (maybe-fold * 2 (just 3 4))     => 24)
 
   (check (either-fold cons '() (left #t))  => '())
   (check (either-fold cons '() (right #t)) => '(#t))
+  (check (either-fold * 2 (right 3 4))     => 24)
 
   (check (nothing? (maybe-unfold always not #f #f))              => #t)
   (check (maybe= eqv? (just #t) (maybe-unfold never not #f #f))  => #t)
 
   (check (left-of-z? (either-unfold always not #f 'z))               => #t)
-  (check (either= eqv? (right #t) (either-unfold never not #f #f))   => #t))
+  (check (either= eqv? (right #t) (either-unfold never not #f #f))   => #t)
+)
 
 ;;; Trivalent logic
 
