@@ -243,7 +243,6 @@
               (lambda objs
                 (if (apply pred objs) left-of-no-values either))))
 
-;; FIXME: Same questions as maybe-sequence.
 (define (either-sequence container cmap aggregator)
   (assume (procedure? cmap))
   (assume (procedure? aggregator))
@@ -271,6 +270,10 @@
   (assume (list? lis))
   (if (null? lis) left-of-no-values (apply right lis)))
 
+;; This and the following procedure simply return the internal
+;; value-list of the Maybe/Either.  They are thus very cheap to call.
+;; (It is an error (though not one we can report) to mutate the
+;; resulting list.)
 (define (maybe->list maybe)
   (assume (maybe? maybe))
   (if (nothing? maybe) '() (just-objs maybe)))
@@ -301,7 +304,7 @@
   (assume (maybe? maybe))
   (maybe-ref maybe
              (lambda () (values #f #f))
-             (lambda objs
+             (lambda objs  ; return the payload and #t as values
                (apply values (append objs '(#t))))))
 
 (define (values->maybe producer)
@@ -313,8 +316,8 @@
     ((x) (just x))
     (xs
      (let-values (((vals last-pair) (split-at xs (- (length xs) 1))))
-       (if (car last-pair)
-           (raw-just vals)
+       (if (car last-pair)    ; if the last value is true,
+           (raw-just vals)    ; return the Just-wrapped remaining values.
            nothing-obj))))))
 
 (define (either->values either)
@@ -337,8 +340,8 @@
     ((x) (right x))
     (xs
      (let-values (((vals last-pair) (split-at xs (- (length xs) 1))))
-       (if (car last-pair)
-           (raw-right vals)
+       (if (car last-pair)   ; if the last value is true,
+           (raw-right vals)  ; return the Right-wrapped remaining values.
            left-of-no-values))))))
 
 ;;; Map, fold, and unfold
@@ -384,7 +387,6 @@
   (either-bind either proc)
   unspecified)
 
-;; FIXME: How does this work with multiple values?
 (define (either-fold kons nil either)
   (assume (procedure? kons))
   (assume (either? either))
