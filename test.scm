@@ -33,9 +33,12 @@
           ((check expr)
            (check expr => #t))
           ((check expr => expected)
-           (if expr
+           (if (equal? expr expected)
              (begin
                (display 'expr)
+               (display " => ")
+               (display expected)
+               (display " ; correct")
                (newline))
              (begin
                (display "FAILED: for ")
