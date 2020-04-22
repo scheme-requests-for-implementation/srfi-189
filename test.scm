@@ -71,7 +71,15 @@
 (define always (constantly #t))
 (define never (constantly #f))
 
-;; verify that an Either is a Left of 'z, a dummy object
+;; Verify that a Maybe is a Just of 'z, a dummy object
+(define (just-of-z? m)
+  (and (maybe? m) (maybe= eqv? m (just 'z))))
+
+;; Verify that an Either is a Right of 'z, a dummy object
+(define (right-of-z? e)
+  (and (either? e) (either= eqv? e (right 'z))))
+
+;; Verify that an Either is a Left of 'z, a dummy object
 (define (left-of-z? e)
   (and (either? e) (either= eqv? e (left 'z))))
 
@@ -175,33 +183,31 @@
 
 (define (check-join-and-bind)
   ;; maybe-join
-  (check (maybe= eqv? (maybe-join (just (just #t))) (just #t)) => #t)
-  (check (nothing? (maybe-join (just (nothing))))              => #t)
-  (check (nothing? (maybe-join (nothing)))                     => #t)
-  (check (catch-exceptions (maybe-join (just #t)))             => 'exception)
+  (check (just-of-z? (maybe-join (just (just 'z)))) => #t)
+  (check (nothing? (maybe-join (just (nothing))))   => #t)
+  (check (nothing? (maybe-join (nothing)))          => #t)
+  (check (catch-exceptions (maybe-join (just #t)))  => 'exception)
   (check (catch-exceptions (maybe-join (just (just #t) (just #t))))
     => 'exception)
 
   ;; either-join
-  (check (either= eqv? (either-join (right (right #t))) (right #t)) => #t)
-  (check (either= eqv? (either-join (right (left #t))) (left #t))   => #t)
-  (check (either= eqv? (either-join (left #t)) (left #t))           => #t)
-  (check (catch-exceptions (either-join (right #t)))
-    => 'exception)
+  (check (right-of-z? (either-join (right (right 'z)))) => #t)
+  (check (left-of-z? (either-join (right (left 'z))))   => #t)
+  (check (left-of-z? (either-join (left 'z)))           => #t)
+  (check (catch-exceptions (either-join (right #t)))    => 'exception)
   (check (catch-exceptions (either-join (right (right #t) (right #t))))
     => 'exception)
 
   ;; maybe-bind
   (check (nothing? (maybe-bind (nothing) just)) => #t)
 
-  (check (let ((m (just #t)))
-           (maybe= eqv? m (maybe-bind m just)))
-    => #t)
+  (check (just-of-z? (maybe-bind (just 'z) just)) => #t)
 
   (check (let ((m (just #t #f)))
            (maybe= eqv? m (maybe-bind m just)))
     => #t)
 
+  ;; Associativity of bind.
   (let ((k (lambda (n) (just (* n 2))))
         (h (lambda (n) (just (+ n 5))))
         (m (just 1)))
@@ -210,15 +216,17 @@
                    (maybe-bind (maybe-bind m k) h))
       => #t))
 
+  ;; Bind with multiple mprocs.
   (let ((neg (lambda (b) (just (not b)))))
     (check (maybe= eqv? (just #f) (maybe-bind (just #t) neg neg neg)) => #t)
     (check (nothing? (maybe-bind (just #t) neg (constantly (nothing)) neg))
       => #t))
 
   ;; maybe-compose
-  (check (nothing? ((maybe-compose just) (nothing)))              => #t)
-  (check (maybe= eqv? (just #t) ((maybe-compose just) (just #t))) => #t)
+  (check (nothing? ((maybe-compose just) (nothing)))   => #t)
+  (check (just-of-z? ((maybe-compose just) (just 'z))) => #t)
 
+  ;; Compose with multiple mprocs.
   (let ((neg (lambda (b) (just (not b)))))
     (check (maybe= eqv? (just #t) ((maybe-compose neg neg neg) (just #f)))
       => #t))
@@ -226,14 +234,13 @@
   ;; either-bind
   (check (left? (either-bind (left #f) right)) => #t)
 
-  (check (let ((e (right #t)))
-           (either= eqv? e (either-bind e right)))
-    => #t)
+  (check (right-of-z? (either-bind (right 'z) right)) => #t)
 
   (check (let ((e (right #t #f)))
            (either= eqv? e (either-bind e right)))
     => #t)
 
+  ;; Associativity of bind.
   (let ((k (lambda (n) (right (* n 2))))
         (h (lambda (n) (right (+ n 5))))
         (e (right 1)))
@@ -242,14 +249,17 @@
                    (either-bind (either-bind e k) h))
      => #t))
 
+  ;; Bind with multiple mprocs.
   (let ((neg (lambda (b) (right (not b)))))
     (check (either= eqv? (right #f) (either-bind (right #t) neg neg neg)) => #t)
-    (check (either= eqv? (left #f) (either-bind (right #t) neg left neg)) => #t))
+    (check (either= eqv? (left #f) (either-bind (right #t) neg left neg))
+      => #t))
 
   ;; either-compose
   (check (left? ((either-compose right) (left 'z)))                    => #t)
   (check (either= eqv? (right #t) ((either-compose right) (right #t))) => #t)
 
+  ;; Compose with multiple mprocs.
   (let ((neg (lambda (b) (right (not b)))))
     (check (either= eqv? (right #t) ((either-compose neg neg neg) (right #f)))
       => #t))
@@ -267,15 +277,15 @@
   (check (either-length (right #t)) => 1)
 
   ;; maybe-filter & maybe-remove
-  (check (maybe= eqv? (just #t) (maybe-filter always (just #t))) => #t)
-  (check (nothing? (maybe-filter never (just #t)))               => #t)
-  (check (nothing? (maybe-filter always (nothing)))              => #t)
+  (check (just-of-z? (maybe-filter always (just 'z))) => #t)
+  (check (nothing? (maybe-filter never (just #t)))    => #t)
+  (check (nothing? (maybe-filter always (nothing)))   => #t)
 
   (check (maybe= eqv? (just #t #t) (maybe-filter both (just #t #t))) => #t)
 
-  (check (maybe= eqv? (just #t) (maybe-remove never (just #t)))  => #t)
-  (check (nothing? (maybe-remove always (just #t)))              => #t)
-  (check (nothing? (maybe-remove always (nothing)))              => #t)
+  (check (just-of-z? (maybe-remove never (just 'z))) => #t)
+  (check (nothing? (maybe-remove always (just #t)))  => #t)
+  (check (nothing? (maybe-remove always (nothing)))  => #t)
 
   (check (maybe= eqv? (just #t #f) (maybe-remove both (just #t #f))) => #t)
 
@@ -292,15 +302,15 @@
     => #t)
 
   ;; either-filter & either-remove
-  (check (either= eqv? (right #t) (either-filter always (right #t))) => #t)
-  (check (left-of-no-values? (either-filter never (right #t)))       => #t)
-  (check (left-of-no-values? (either-filter always (left #t)))       => #t)
+  (check (right-of-z? (either-filter always (right 'z)))       => #t)
+  (check (left-of-no-values? (either-filter never (right #t))) => #t)
+  (check (left-of-no-values? (either-filter always (left #t))) => #t)
 
   (check (either= eqv? (right #t #t) (either-filter both (right #t #t))) => #t)
 
-  (check (either= eqv? (right #t) (either-remove never (right #t))) => #t)
-  (check (left-of-no-values? (either-remove always (right #t)))     => #t)
-  (check (left-of-no-values? (either-remove never (left #t)))       => #t)
+  (check (right-of-z? (either-remove never (right 'z)))         => #t)
+  (check (left-of-no-values? (either-remove always (right #t))) => #t)
+  (check (left-of-no-values? (either-remove never (left #t)))   => #t)
 
   (check (either= eqv? (right #t #f) (either-remove both (right #t #f))) => #t)
 
@@ -322,18 +332,18 @@
 (define (check-conversions)
   ;; maybe->either and either->maybe
   (check (left-of-no-values? (maybe->either (nothing)))            => #t)
-  (check (either= eqv? (right #t) (maybe->either (just #t)))       => #t)
+  (check (right-of-z? (maybe->either (just 'z)))                   => #t)
   (check (either= eqv? (right #t #t) (maybe->either (just #t #t))) => #t)
   (check (nothing? (either->maybe (left #t)))                      => #t)
-  (check (maybe= eqv? (just #t) (either->maybe (right #t)))        => #t)
+  (check (just-of-z? (either->maybe (right 'z)))                   => #t)
   (check (maybe= eqv? (just #t #t) (either->maybe (right #t #t)))  => #t)
 
   ;; list->maybe and list->either
   (check (nothing? (list->maybe '()))                         => #t)
-  (check (maybe= eqv? (just #t) (list->maybe '(#t)))          => #t)
+  (check (just-of-z? (list->maybe '(z)))                      => #t)
   (check (maybe= eqv? (just #t #t) (list->maybe '(#t #t)))    => #t)
   (check (left-of-no-values? (list->either '()))              => #t)
-  (check (either= eqv? (right #t) (list->either '(#t)))       => #t)
+  (check (right-of-z? (list->either '(z)))                    => #t)
   (check (either= eqv? (right #t #t) (list->either '(#t #t))) => #t)
 
   ;; maybe->list and either->list
@@ -346,16 +356,16 @@
   (check (either->list (left #t #t))  => '(#t #t))
 
   ;; maybe->lisp and lisp->maybe
-  (check (maybe->lisp (nothing))                  => #f)
-  (check (maybe->lisp (just #t))                  => #t)
-  (check (nothing? (lisp->maybe #f))              => #t)
-  (check (maybe= eqv? (lisp->maybe #t) (just #t)) => #t)
+  (check (maybe->lisp (nothing))       => #f)
+  (check (maybe->lisp (just #t))       => #t)
+  (check (nothing? (lisp->maybe #f))   => #t)
+  (check (just-of-z? (lisp->maybe 'z)) => #t)
 
   ;; maybe->eof and eof->maybe
-  (check (eof-object? (maybe->eof (nothing)))    => #t)
-  (check (maybe->eof (just #t))                  => #t)
-  (check (nothing? (eof->maybe (eof-object)))    => #t)
-  (check (maybe= eqv? (eof->maybe #t) (just #t)) => #t)
+  (check (eof-object? (maybe->eof (nothing))) => #t)
+  (check (maybe->eof (just #t))               => #t)
+  (check (nothing? (eof->maybe (eof-object))) => #t)
+  (check (just-of-z? (eof->maybe 'z))         => #t)
 
   ;; maybe->values and friends
   (check (maybe->values (just #t))                            => #t)
@@ -367,9 +377,8 @@
     => '(#t #f #t))
 
   (check (nothing? (values->maybe (lambda () (values))))          => #t)
-  (check (maybe= eqv? (just #t) (values->maybe (lambda () #t)))   => #t)
-  (check (maybe= eqv? (just #t) (values->maybe (lambda () (values #t #t))))
-    => #t)
+  (check (just-of-z? (values->maybe (lambda () 'z)))              => #t)
+  (check (just-of-z? (values->maybe (lambda () (values 'z #t))))  => #t)
   (check (nothing? (values->maybe (lambda () (values #t #t #f)))) => #t)
 
   ;; either->values and friends
@@ -383,9 +392,8 @@
   (check (let-values ((vals (either->lisp-values (right #t #f)))) vals)
     => '(#t #f #t))
   (check (left-of-no-values? (values->either (lambda () (values)))) => #t)
-  (check (either= eqv? (right #t) (values->either (lambda () #t)))  => #t)
-  (check (either= eqv? (right #t) (values->either (lambda () (values #t #t))))
-    => #t)
+  (check (right-of-z? (values->either (lambda () 'z))) => #t)
+  (check (right-of-z? (values->either (lambda () (values 'z #t)))) => #t)
   (check (left-of-no-values? (values->either (lambda () (values #t #t #f))))
     => #t)
 )
