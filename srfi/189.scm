@@ -54,6 +54,8 @@
 (define (singleton? xs)
   (and (pair? xs) (null? (cdr xs))))
 
+(define unspecified (if #f #f))
+
 ;;; Constructors
 
 (define (just . objs)
@@ -351,7 +353,8 @@
 (define (maybe-for-each proc maybe)
   (assume (procedure? proc))
   (assume (maybe? maybe))
-  (maybe-bind maybe proc))
+  (maybe-bind maybe proc)
+  unspecified)
 
 (define (maybe-fold kons nil maybe)
   (assume (procedure? kons))
@@ -378,7 +381,8 @@
 (define (either-for-each proc either)
   (assume (procedure? proc))
   (assume (either? either))
-  (either-bind either proc))
+  (either-bind either proc)
+  unspecified)
 
 ;; FIXME: How does this work with multiple values?
 (define (either-fold kons nil either)
