@@ -404,9 +404,10 @@
 
 (define-syntax maybe-if
   (syntax-rules ()
-    ((maybe-expr just-expr nothing-expr)
-     (let ((maybe-expr maybe-expr))
-       (if (just? maybe-expr) just-expr nothing-expr)))))
+    ((_ maybe-expr just-expr nothing-expr)
+     (let ((mval maybe-expr))
+       (assume (maybe? mval))
+       (if (just? mval) just-expr nothing-expr)))))
 
 ;;; Trivalent logic
 
