@@ -443,6 +443,14 @@
   (check (either= eqv? (right #t) (either-unfold never not #f #f))   => #t)
 )
 
+;;; Conditional syntax
+
+(define (check-syntax)
+  (check (maybe-if (just #t) #t #f)             => #t)
+  (check (maybe-if (nothing) #t #f)             => #f)
+  (check (catch-exceptions (maybe-if 'z #t #f)) => 'exception)
+)
+
 ;;; Trivalent logic
 
 (define (check-trivalent)
@@ -488,4 +496,5 @@
   (check-sequence-operations)
   (check-conversions)
   (check-map-fold-and-unfold)
+  (check-syntax)
   (check-trivalent))
