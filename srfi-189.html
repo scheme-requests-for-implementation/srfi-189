@@ -254,9 +254,9 @@ more often used in Common Lisp, where additional values are
 automatically discarded if the continuation expects only one.)</p>
 <p><code>(values-&gt;maybe</code> <em>producer</em><code>)</code><br>
 <code>(values-&gt;either</code> <em>producer</em><code>)</code></p>
-<p>The <em>values-&gt;maybe</em> procedure is the inverse of
+<p>The <code>values-&gt;maybe</code> procedure is the inverse of
 both <code>maybe-&gt;values</code> and <code>maybe-&gt;lisp-values</code>,
-and correspondingly for <em>values-&gt;either</em>.
+and correspondingly for <code>values-&gt;either</code>.
 They invoke <em>producer</em> with no arguments.
 If no values are returned, Nothing / Left of no values is returned.
 If one value is returned, the value is wrapped in a Just/Right and returned.
