@@ -39,13 +39,13 @@
           maybe-join maybe-bind maybe-compose either-join either-bind
           either-compose
 
-          maybe-length maybe-contains? maybe-filter maybe-remove either-length
-          either-contains? either-filter either-remove
+          maybe-length maybe-filter maybe-remove either-length
+          either-filter either-remove
           maybe-sequence either-sequence
 
           maybe->either either->maybe list->maybe list->either maybe->list
-          either->list maybe->lisp lisp->maybe maybe->values maybe->two-values
-          values->maybe either->values either->two-values values->either
+          either->list maybe->lisp lisp->maybe maybe->values maybe->lisp-values
+          values->maybe either->values either->lisp-values values->either
           maybe-for-each either-for-each maybe->eof eof->maybe
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
