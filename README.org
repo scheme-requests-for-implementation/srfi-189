@@ -4,6 +4,8 @@
 
 
 
+keywords: [[https://srfi.schemers.org/?keywords=data-structure][Data Structure]]
+
 This repository hosts [[https://srfi.schemers.org/srfi-189/][SRFI 189]]: Maybe and Either: optional container types, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /draft/ status.
