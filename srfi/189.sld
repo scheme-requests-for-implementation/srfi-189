@@ -43,7 +43,7 @@
           either-filter either-remove
           maybe-sequence either-sequence
 
-          maybe->either either->maybe list->maybe list->either maybe->list
+          maybe->either either->maybe list->just list->right maybe->list
           either->list maybe->lisp lisp->maybe maybe->values maybe->lisp-values
           values->maybe either->values either->lisp-values values->either
           maybe-for-each either-for-each maybe->eof eof->maybe

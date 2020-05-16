@@ -29,16 +29,14 @@
   nothing?)
 
 (define-record-type <left>
-  (raw-left objs)
+  (left obj)
   left?
-  (objs left-objs))
+  (obj left-obj))
 
 (define-record-type <right>
   (raw-right objs)
   right?
   (objs right-objs))
-
-(define left-of-no-values (raw-left '()))
 
 (define nothing-obj (make-nothing))
 
@@ -54,15 +52,18 @@
 (define (singleton? xs)
   (and (pair? xs) (null? (cdr xs))))
 
+(define-syntax ensure-singleton
+  (syntax-rules ()
+    ((_ xs msg)
+     (unless (singleton? xs)
+       (error msg xs)))))
+
 (define unspecified (if #f #f))
 
 ;;; Constructors
 
 (define (just . objs)
   (raw-just objs))
-
-(define (left . objs)
-  (raw-left objs))
 
 (define (right . objs)
   (raw-right objs))
@@ -89,7 +90,11 @@
 
 (define (either-swap either)
   (assume (either? either))
-  (either-ref either right left))
+  (either-ref either
+              right
+              (lambda objs
+                (ensure-singleton objs "either-swap: invalid payload")
+                (left (car objs)))))
 
 ;; True if either1 and either2 are both lefts or both rights and their
 ;; payloads are equal in the sense of the procedure equal.
@@ -97,10 +102,11 @@
   (assume (procedure? equal))
   (assume (either? either1))
   (assume (either? either2))
-  (let ((e= (lambda (acc) (list= equal (acc either1) (acc either2)))))
-    (cond ((and (left? either1) (left? either2)) (e= left-objs))
-          ((and (right? either1) (right? either2)) (e= right-objs))
-          (else #f))))
+  (cond ((and (left? either1) (left? either2))
+         (equal (left-obj either1) (left-obj either2)))
+        ((and (right? either1) (right? either2))
+         (list= equal (right-objs either1) (right-objs either2)))
+        (else #f)))
 
 ;;; Accessors
 
@@ -122,8 +128,7 @@
 
 (define either-ref
   (case-lambda
-   ((either) (either-ref either (lambda objs
-                                  (raise (if (null? objs) #f (car objs))))))
+   ((either) (either-ref either raise))
    ((either failure) (either-ref either failure values))
    ((either failure success)
     (assume (either? either))
@@ -131,7 +136,7 @@
     (assume (procedure? success))
     (if (right? either)
         (apply success (right-objs either))
-        (apply failure (left-objs either))))))
+        (failure (left-obj either))))))
 
 (define (either-ref/default either . defaults)
   (assume (either? either))
@@ -146,7 +151,7 @@
              (lambda objs  ;; payload must be a single Maybe
                (if (and (singleton? objs) (maybe? (car objs)))
                    (car objs)
-                   (error "maybe-join: invalid payload" maybe objs)))))
+                   (error "maybe-join: invalid payload" objs)))))
 
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
@@ -173,7 +178,7 @@
               (lambda objs  ;; payload must be a single Either
                 (if (and (singleton? objs) (either? (car objs)))
                     (car objs)
-                    (error "either-join: invalid payload" either objs)))))
+                    (error "either-join: invalid payload" objs)))))
 
 (define (either-bind either mproc . mprocs)
   (assume (either? either))
@@ -214,61 +219,67 @@
               (lambda objs
                 (if (apply pred objs) nothing-obj maybe))))
 
-(define (maybe-sequence container cmap aggregator)
-  (assume (procedure? cmap))
-  (assume (procedure? aggregator))
-  (call-with-current-continuation
-   (lambda (return)
-     (just (cmap (lambda (m)
-                   (maybe-ref m (lambda () (return m)) aggregator))
-                 container)))))
+(define maybe-sequence
+  (case-lambda
+   ((container cmap) (maybe-sequence container cmap list))
+   ((container cmap aggregator)
+    (assume (procedure? cmap))
+    (assume (procedure? aggregator))
+    (call-with-current-continuation
+     (lambda (return)
+       (just (cmap (lambda (m)
+                     (maybe-ref m (lambda () (return m)) aggregator))
+                   container)))))))
 
 (define (either-length either)
   (assume (either? either))
   (if (right? either) 1 0))
 
-(define (either-filter pred either)
+(define (either-filter pred either obj)
   (assume (procedure? pred))
   (assume (either? either))
   (either-ref either
-              (const left-of-no-values)
+              (const (left obj))
               (lambda objs
-                (if (apply pred objs) either left-of-no-values))))
+                (if (apply pred objs) either (left obj)))))
 
-(define (either-remove pred either)
+(define (either-remove pred either obj)
   (assume (procedure? pred))
   (assume (either? either))
   (either-ref either
-              (const left-of-no-values)
+              (const (left obj))
               (lambda objs
-                (if (apply pred objs) left-of-no-values either))))
+                (if (apply pred objs) (left obj) either))))
 
-(define (either-sequence container cmap aggregator)
-  (assume (procedure? cmap))
-  (assume (procedure? aggregator))
-  (call-with-current-continuation
-   (lambda (return)
-     (right (cmap (lambda (e)
-                    (either-ref e (const (return e)) aggregator))
-                  container)))))
+(define either-sequence
+  (case-lambda
+   ((container cmap) (either-sequence container cmap list))
+   ((container cmap aggregator)
+    (assume (procedure? cmap))
+    (assume (procedure? aggregator))
+    (call-with-current-continuation
+     (lambda (return)
+       (right (cmap (lambda (e)
+                      (either-ref e (const (return e)) aggregator))
+                    container)))))))
 
 ;;; Conversion
 
-(define (maybe->either maybe)
+(define (maybe->either maybe obj)
   (assume (maybe? maybe))
-  (maybe-ref maybe left right))
+  (maybe-ref maybe (lambda () (left obj)) right))
 
 (define (either->maybe either)
   (assume (either? either))
   (either-ref either (const nothing-obj) just))
 
-(define (list->maybe lis)
+(define (list->just lis)
   (assume (list? lis))
-  (if (null? lis) nothing-obj (apply just lis)))
+  (apply just lis))
 
-(define (list->either lis)
+(define (list->right lis)
   (assume (list? lis))
-  (if (null? lis) left-of-no-values (apply right lis)))
+  (apply right lis))
 
 ;; This and the following procedure simply return the internal
 ;; value-list of the Maybe/Either.  They are thus very cheap to call.
@@ -280,18 +291,26 @@
 
 (define (either->list either)
   (assume (either? either))
-  (if (right? either) (right-objs either) (left-objs either)))
+  (if (right? either) (right-objs either) (list (left-obj either))))
 
 (define (maybe->lisp maybe)
   (assume (maybe? maybe))
-  (maybe-ref/default maybe #f))
+  (maybe-ref maybe
+             (lambda () #f)
+             (lambda objs
+               (ensure-singleton objs "maybe->lisp: invalid payload")
+               (car objs))))
 
 (define (lisp->maybe obj)
   (if obj (just obj) nothing-obj))
 
 (define (maybe->eof maybe)
   (assume (maybe? maybe))
-  (maybe-ref/default maybe (eof-object)))
+  (maybe-ref maybe
+             (lambda () (eof-object))
+             (lambda objs
+               (ensure-singleton objs "maybe->eof: invalid payload")
+               (car objs))))
 
 (define (eof->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
@@ -304,8 +323,9 @@
   (assume (maybe? maybe))
   (maybe-ref maybe
              (lambda () (values #f #f))
-             (lambda objs  ; return the payload and #t as values
-               (apply values (append objs '(#t))))))
+             (lambda objs
+               (ensure-singleton objs "maybe->lisp-values: invalid payload")
+               (values (car objs) #t))))
 
 (define (values->maybe producer)
   (assume (procedure? producer))
@@ -314,11 +334,8 @@
    (case-lambda
     (() nothing-obj)
     ((x) (just x))
-    (xs
-     (let-values (((vals last-pair) (split-at xs (- (length xs) 1))))
-       (if (car last-pair)    ; if the last value is true,
-           (raw-just vals)    ; return the Just-wrapped remaining values.
-           nothing-obj))))))
+    ((x y) (if y (just x) nothing-obj))
+    (xs (error "values->maybe: too many values" xs)))))
 
 (define (either->values either)
   (assume (either? either))
@@ -329,20 +346,18 @@
   (either-ref either
               (const (values #f #f))
               (lambda objs
-                (apply values (append objs '(#t))))))
+                (ensure-singleton objs "either->lisp-values: invalid payload")
+                (values (car objs) #t))))
 
-(define (values->either producer)
+(define (values->either producer obj)
   (assume (procedure? producer))
   (call-with-values
    producer
    (case-lambda
-    (() left-of-no-values)
+    (() (left obj))
     ((x) (right x))
-    (xs
-     (let-values (((vals last-pair) (split-at xs (- (length xs) 1))))
-       (if (car last-pair)   ; if the last value is true,
-           (raw-right vals)  ; return the Right-wrapped remaining values.
-           left-of-no-values))))))
+    ((x y) (if y (right x) (left obj)))
+    (xs (error "values->maybe: too many values" xs)))))
 
 ;;; Map, fold, and unfold
 
