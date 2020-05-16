@@ -38,8 +38,6 @@
   right?
   (objs right-objs))
 
-(define left-of-no-values (left '()))
-
 (define nothing-obj (make-nothing))
 
 (define (nothing)
@@ -243,7 +241,7 @@
   (either-ref either
               (const (left obj))
               (lambda objs
-                (if (apply pred objs) either left-of-no-values))))
+                (if (apply pred objs) either (left obj)))))
 
 (define (either-remove pred either obj)
   (assume (procedure? pred))
@@ -251,7 +249,7 @@
   (either-ref either
               (const (left obj))
               (lambda objs
-                (if (apply pred objs) left-of-no-values either))))
+                (if (apply pred objs) (left obj) either))))
 
 (define either-sequence
   (case-lambda
