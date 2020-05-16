@@ -151,7 +151,7 @@
              (lambda objs  ;; payload must be a single Maybe
                (if (and (singleton? objs) (maybe? (car objs)))
                    (car objs)
-                   (apply error "maybe-join: invalid payload" objs)))))
+                   (error "maybe-join: invalid payload" objs)))))
 
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
@@ -178,7 +178,7 @@
               (lambda objs  ;; payload must be a single Either
                 (if (and (singleton? objs) (either? (car objs)))
                     (car objs)
-                    (apply error "either-join: invalid payload" objs)))))
+                    (error "either-join: invalid payload" objs)))))
 
 (define (either-bind either mproc . mprocs)
   (assume (either? either))
