@@ -98,9 +98,8 @@
   (check (eq? (nothing) (nothing)) => #t)
 
   ;; either-swap
-  (check (either= eqv? (left #t) (either-swap (right #t))) => #t)
-  (check (either= eqv? (right #t) (either-swap (left #t))) => #t)
-  (check (catch-exceptions (either-swap (right #t #t)))    => 'exception))
+  (check (either= eqv? (right #t #t) (either-swap (left #t #t))) => #t)
+  (check (either= eqv? (left #t #t) (either-swap (right #t #t))) => #t))
 
 ;;; Predicates
 
@@ -119,9 +118,6 @@
   (check (either? (right 1)) => #t)
   (check (either? (left 1))  => #t)
 
-  (check (right? (catch-exceptions (right #t #f))) => #t)
-  (check (catch-exceptions (left #t #f))           => 'exception)
-
   (check (maybe= eqv? (just #t) (just #t)) => #t)
   (check (maybe= eqv? (just #t) (just #f)) => #f)
   (check (maybe= eqv? (nothing) (nothing)) => #t)
@@ -139,7 +135,11 @@
 
   (check (either= eqv? (right #t #f) (right #t #f)) => #t)
   (check (either= eqv? (right #t #f) (right #t 'z)) => #f)
-  (check (either= eqv? (right #t #f) (right #t))    => #f))
+  (check (either= eqv? (right #t #f) (right #t))    => #f)
+  (check (either= eqv? (left #t #f) (left #t #f))   => #t)
+  (check (either= eqv? (left #t #f) (left #t 'z))   => #f)
+  (check (either= eqv? (left #t #f) (left #t))      => #f)
+  (check (either= eqv? (left #t #f) (right #t #f))  => #f))
 
 ;;; Accessors
 
@@ -161,6 +161,7 @@
 
   (check (values~>list (either-ref (right #t #f)))       => '(#t #f))
   (check (either-ref (right #t #f) (constantly #f) list) => '(#t #f))
+  (check (either-ref (left #t #f) list (constantly #f))  => '(#t #f))
 
   (check (maybe-ref/default (just #t) #f) => #t)
   (check (maybe-ref/default (nothing) #f) => #f)
@@ -338,8 +339,8 @@
   ;; maybe->list and either->list
   (check (maybe->list (nothing))      => '())
   (check (maybe->list (just #t #t))   => '(#t #t))
-  (check (either->list (left #t))     => '(#t))
   (check (either->list (right #t #t)) => '(#t #t))
+  (check (either->list (left #t #t))  => '(#t #t))
 
   ;; maybe->lisp and lisp->maybe
   (check (maybe->lisp (nothing))                       => #f)
@@ -372,7 +373,7 @@
 
   ;; either->values and friends
   (check (either->values (right #t)) => #t)
-  (check (values~>list (maybe->values (nothing))) => '())
+  (check (values~>list (either->values (left 'z))) => '())
 
   (check (values~>list (either->lisp-values (left #t)))  => '(#f #f))
   (check (values~>list (either->lisp-values (right #t))) => '(#t #t))
