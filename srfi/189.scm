@@ -29,9 +29,9 @@
   nothing?)
 
 (define-record-type <left>
-  (left obj)
+  (raw-left objs)
   left?
-  (obj left-obj))
+  (objs left-objs))
 
 (define-record-type <right>
   (raw-right objs)
@@ -65,6 +65,9 @@
 (define (just . objs)
   (raw-just objs))
 
+(define (left . objs)
+  (raw-left objs))
+
 (define (right . objs)
   (raw-right objs))
 
@@ -90,11 +93,7 @@
 
 (define (either-swap either)
   (assume (either? either))
-  (either-ref either
-              right
-              (lambda objs
-                (ensure-singleton objs "either-swap: invalid payload")
-                (left (car objs)))))
+  (either-ref either right left))
 
 ;; True if either1 and either2 are both lefts or both rights and their
 ;; payloads are equal in the sense of the procedure equal.
@@ -102,11 +101,10 @@
   (assume (procedure? equal))
   (assume (either? either1))
   (assume (either? either2))
-  (cond ((and (left? either1) (left? either2))
-         (equal (left-obj either1) (left-obj either2)))
-        ((and (right? either1) (right? either2))
-         (list= equal (right-objs either1) (right-objs either2)))
-        (else #f)))
+  (let ((e= (lambda (acc) (list= equal (acc either1) (acc either2)))))
+    (cond ((and (left? either1) (left? either2)) (e= left-objs))
+          ((and (right? either1) (right? either2)) (e= right-objs))
+          (else #f))))
 
 ;;; Accessors
 
@@ -136,7 +134,7 @@
     (assume (procedure? success))
     (if (right? either)
         (apply success (right-objs either))
-        (failure (left-obj either))))))
+        (apply failure (left-objs either))))))
 
 (define (either-ref/default either . defaults)
   (assume (either? either))
@@ -291,7 +289,7 @@
 
 (define (either->list either)
   (assume (either? either))
-  (if (right? either) (right-objs either) (list (left-obj either))))
+  ((if (right? either) right-objs left-objs) either))
 
 (define (maybe->lisp maybe)
   (assume (maybe? maybe))
