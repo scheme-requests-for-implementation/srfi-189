@@ -42,8 +42,8 @@
 
 (define (nothing)
   nothing-obj)
-
-;;; Utility
+
+;;;; Utility
 
 (define-syntax const
   (syntax-rules ()
@@ -52,15 +52,13 @@
 (define (singleton? xs)
   (and (pair? xs) (null? (cdr xs))))
 
-(define-syntax ensure-singleton
-  (syntax-rules ()
-    ((_ xs msg)
-     (unless (singleton? xs)
-       (error msg xs)))))
+(define (ensure-singleton lis msg)
+  (unless (singleton? lis)
+    (error msg lis)))
 
 (define unspecified (if #f #f))
 
-;;; Constructors
+;;;; Constructors
 
 (define (just . objs)
   (raw-just objs))
@@ -71,7 +69,7 @@
 (define (right . objs)
   (raw-right objs))
 
-;;; Predicates
+;;;; Predicates
 
 (define (maybe? obj)
   (or (just? obj) (nothing? obj)))
@@ -79,6 +77,8 @@
 (define (nothing? obj)
   (eqv? obj nothing-obj))
 
+;; True if maybe1 and maybe2 are both Nothing, or if both are Justs
+;; whose payloads are equal in the sense of equal.
 (define (maybe= equal maybe1 maybe2)
   (assume (procedure? equal))
   (assume (maybe? maybe1))
@@ -95,8 +95,8 @@
   (assume (either? either))
   (either-ref either right left))
 
-;; True if either1 and either2 are both lefts or both rights and their
-;; payloads are equal in the sense of the procedure equal.
+;; True if either1 and either2 are both Lefts or both Rights and their
+;; payloads are equal in the sense of equal.
 (define (either= equal either1 either2)
   (assume (procedure? equal))
   (assume (either? either1))
@@ -105,12 +105,13 @@
     (cond ((and (left? either1) (left? either2)) (e= left-objs))
           ((and (right? either1) (right? either2)) (e= right-objs))
           (else #f))))
-
-;;; Accessors
+
+;;;; Accessors
 
 (define maybe-ref
   (case-lambda
-   ((maybe) (maybe-ref maybe (lambda () (error "maybe-ref: failure" maybe))))
+   ((maybe) (maybe-ref maybe (lambda ()
+                               (error "maybe-ref: failure" maybe))))
    ((maybe failure) (maybe-ref maybe failure values))
    ((maybe failure success)
     (assume (maybe? maybe))
@@ -140,17 +141,18 @@
   (assume (either? either))
   (apply values (if (right? either) (right-objs either) defaults)))
 
-;;; Join and bind
+;;;; Join and bind
 
+;; If maybe is a Just containing a single Maybe, return that Maybe.
 (define (maybe-join maybe)
   (assume (maybe? maybe))
   (maybe-ref maybe
              nothing
-             (lambda objs  ;; payload must be a single Maybe
+             (lambda objs
                (if (and (singleton? objs) (maybe? (car objs)))
                    (car objs)
                    (error "maybe-join: invalid payload" objs)))))
-
+
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
   (if (null? mprocs)
@@ -161,7 +163,9 @@
                    (lambda objs
                      (if (null? mprocs)
                          (apply mp objs)  ; tail-call last
-                         (lp (apply mp objs) (car mprocs) (cdr mprocs))))))))
+                         (lp (apply mp objs)
+                             (car mprocs)
+                             (cdr mprocs))))))))
 
 (define (maybe-compose . mprocs)
   (assume (pair? mprocs))
@@ -169,11 +173,12 @@
     (assume (maybe? maybe))
     (apply maybe-bind maybe mprocs)))
 
+;; If either is a Right containing a single Either, return that Either.
 (define (either-join either)
   (assume (either? either))
   (either-ref either
               (const either)
-              (lambda objs  ;; payload must be a single Either
+              (lambda objs
                 (if (and (singleton? objs) (either? (car objs)))
                     (car objs)
                     (error "either-join: invalid payload" objs)))))
@@ -188,7 +193,9 @@
                     (lambda objs
                       (if (null? mprocs)
                           (apply mp objs)  ; tail-call last
-                          (lp (apply mp objs) (car mprocs) (cdr mprocs))))))))
+                          (lp (apply mp objs)
+                              (car mprocs)
+                              (cdr mprocs))))))))
 
 (define (either-compose . mprocs)
   (assume (pair? mprocs))
@@ -196,8 +203,8 @@
     (assume (either? either))
     (apply either-bind either mprocs)))
 
-
-;;; Sequence operations
+
+;;;; Sequence operations
 
 (define (maybe-length maybe)
   (assume (maybe? maybe))
@@ -260,8 +267,8 @@
        (right (cmap (lambda (e)
                       (either-ref e (const (return e)) aggregator))
                     container)))))))
-
-;;; Conversion
+
+;;;; Conversion
 
 (define (maybe->either maybe obj)
   (assume (maybe? maybe))
@@ -279,10 +286,6 @@
   (assume (list? lis))
   (apply right lis))
 
-;; This and the following procedure simply return the internal
-;; value-list of the Maybe/Either.  They are thus very cheap to call.
-;; (It is an error (though not one we can report) to mutate the
-;; resulting list.)
 (define (maybe->list maybe)
   (assume (maybe? maybe))
   (if (nothing? maybe) '() (just-objs maybe)))
@@ -312,7 +315,7 @@
 
 (define (eof->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
-
+
 (define (maybe->values maybe)
   (assume (maybe? maybe))
   (maybe-ref maybe values values))
@@ -322,7 +325,8 @@
   (maybe-ref maybe
              (lambda () (values #f #f))
              (lambda objs
-               (ensure-singleton objs "maybe->lisp-values: invalid payload")
+               (ensure-singleton objs
+                                 "maybe->lisp-values: invalid payload")
                (values (car objs) #t))))
 
 (define (values->maybe producer)
@@ -344,7 +348,8 @@
   (either-ref either
               (const (values #f #f))
               (lambda objs
-                (ensure-singleton objs "either->lisp-values: invalid payload")
+                (ensure-singleton objs
+                                  "either->lisp-values: invalid payload")
                 (values (car objs) #t))))
 
 (define (values->either producer obj)
@@ -356,8 +361,8 @@
     ((x) (right x))
     ((x y) (if y (right x) (left obj)))
     (xs (error "values->maybe: too many values" xs)))))
-
-;;; Map, fold, and unfold
+
+;;;; Map, fold, and unfold
 
 (define (maybe-map proc maybe)
   (assume (procedure? proc))
@@ -414,8 +419,8 @@
   (assume (procedure? stop?))
   (assume (procedure? mapper))
   (if (stop? seed) (left seed) (right (mapper seed))))
-
-;; Conditional syntax
+
+;;;; Conditional syntax
 
 (define-syntax maybe-if
   (syntax-rules ()
@@ -424,10 +429,11 @@
        (assume (maybe? mval))
        (if (just? mval) just-expr nothing-expr)))))
 
-;;; Trivalent logic
+;;;; Trivalent logic
 
-;; In the following procedures, (just #f) is considered false.  All
-;; other Just values are true.
+;;; In the following procedures, (just #f) is considered to be false.
+;;; All other Just values are taken to be true.
+
 (define (just->boolean maybe)
   (not (equal? (just-objs maybe) '(#f))))
 
