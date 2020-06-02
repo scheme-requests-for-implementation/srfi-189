@@ -129,14 +129,18 @@ and <code>#f</code> otherwise.</p>
 <p>Returns <code>#t</code> if <em>either1</em> and <em>either2</em> are both Lefts or both Rights
 and the respective values of their payloads are the same in the sense of <em>equal</em>,
 and <code>#f</code> otherwise.</p>
+<p><code>(maybe-ref-error?</code> <em>obj</em><code>)</code></p>
+<p>Returns <code>#t</code> on any object that can be raised by the
+default <em>failure</em> argument of <code>maybe-ref</code>,
+and <code>#f</code> on all other objects.</p>
 <h3 id="accessors">Accessors</h3>
 <p><code>(maybe-ref</code> <em>maybe</em> [<em>failure</em> [<em>success</em>] ]<code>)</code></p>
 <p>If <em>maybe</em> is a Just, tail-calls the procedure <em>success</em>
 on the values of its payload and returns the result.  Otherwise, it
 tail-calls the procedure <em>failure</em> on no arguments and
-returns the result.
-The default value of <em>failure</em> is<code>raise</code>;
-the default value of <em>success</em> is <code>values</code></p>
+returns the result.  The default value of <em>failure</em>
+is a procedure that raises an object that satisfies <code>maybe-ref-error?</code>;
+the default value of <em>success</em> is <code>values</code>.</p>
 <p><code>(either-ref</code> <em>either</em> [<em>failure</em> [<em>success</em>] ]<code>)</code></p>
 <p>If <em>either</em> is a Right, tail-calls the procedure <em>success</em>
 on the values of its payload and returns the result.  Otherwise, it
