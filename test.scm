@@ -383,12 +383,12 @@
   (check (values~>list (maybe->lisp-values (just #t)))        => '(#t #t))
   (check (catch-exceptions (maybe->lisp-values (just #t #t))) => 'exception)
 
-  (check (nothing? (values->maybe (lambda () (values))))          => #t)
-  (check (just-of-z? (values->maybe (lambda () 'z)))              => #t)
-  (check (just-of-z? (values->maybe (lambda () (values 'z #t))))  => #t)
-  (check (nothing? (values->maybe (lambda () (values #t #f))))    => #t)
-  (check (catch-exceptions (values->maybe (lambda () (values #t #f #t))))
-   => 'exception)
+  (check (nothing? (values->maybe (lambda () (values)))) => #t)
+  (check (just-of-z? (values->maybe (lambda () 'z)))     => #t)
+  (check (maybe->values (values->maybe (lambda () #t)))  => #t)
+  (check (just-of-z? (values->maybe (lambda ()
+                                      (maybe->values (just 'z)))))
+    => #t)
 
   ;; either->values and friends
   (check (either->values (right #t)) => #t)
@@ -399,12 +399,13 @@
   (check (catch-exceptions (either->lisp-values (right #t #f)))
    => 'exception)
 
-  (check (left-of-z? (values->either (lambda () (values)) 'z))        => #t)
-  (check (right-of-z? (values->either (lambda () 'z) #f))             => #t)
-  (check (right-of-z? (values->either (lambda () (values 'z #t)) #f)) => #t)
-  (check (left-of-z? (values->either (lambda () (values #t #f))'z))   => #t)
-  (check (catch-exceptions (values->either (lambda () (values #t #f #t)) 'z))
-   => 'exception))
+  (check (left-of-z? (values->either (lambda () (values)) 'z)) => #t)
+  (check (right-of-z? (values->either (lambda () 'z) #f))      => #t)
+  (check (either->values (values->either (lambda () #t) #f))   => #t)
+  (check (right-of-z? (values->either (lambda ()
+                                        (either->values (right 'z)))
+                                      #f))
+    => #t))
 
 ;;;; Map, fold, and unfold
 
