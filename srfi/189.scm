@@ -332,11 +332,11 @@
   (assume (procedure? producer))
   (call-with-values
    producer
-   (case-lambda
-    (() nothing-obj)
-    ((x) (just x))
-    ((x y) (if y (just x) nothing-obj))
-    (xs (error "values->maybe: too many values" xs)))))
+   (lambda objs
+     (if (null? objs) nothing-obj (raw-just objs)))))
+
+(define (lisp-values->maybe producer)
+  (values->maybe producer))
 
 (define (either->values either)
   (either-ref either (const (values)) values))
@@ -355,11 +355,11 @@
   (assume (procedure? producer))
   (call-with-values
    producer
-   (case-lambda
-    (() (left obj))
-    ((x) (right x))
-    ((x y) (if y (right x) (left obj)))
-    (xs (error "values->maybe: too many values" xs)))))
+   (lambda objs
+     (if (null? objs) (left obj) (raw-right objs)))))
+
+(define (lisp-values->either producer obj)
+  (values->either producer obj))
 
 ;;;; Map, fold, and unfold
 
