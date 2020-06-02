@@ -371,7 +371,7 @@
 
 (define (maybe-for-each proc maybe)
   (assume (procedure? proc))
-  (maybe-bind maybe proc)
+  (maybe-ref maybe (const #f) proc)
   unspecified)
 
 (define (maybe-fold kons nil maybe)
@@ -398,7 +398,7 @@
 
 (define (either-for-each proc either)
   (assume (procedure? proc))
-  (either-bind either proc)
+  (either-ref either (const #f) proc)
   unspecified)
 
 (define (either-fold kons nil either)
