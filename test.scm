@@ -50,16 +50,22 @@
                (newline))
              ))))
       (define (check-report) #t))))
-
-
-;;; Utility
+
+;;;; Utility
 
 (define (identity x) x)
+
+(define (print-header message)
+  (newline)
+  (display ";;; ")
+  (display message)
+  (newline))
 
 (define-syntax constantly
   (syntax-rules ()
     ((_ obj) (lambda _ obj))))
 
+;; Gives the value of expr, or 'exception if an exception was raised.
 (define-syntax catch-exceptions
   (syntax-rules ()
     ((_ expr)
@@ -69,6 +75,7 @@
          (lambda (_) (k 'exception))
          (lambda () expr)))))))
 
+;; Gives the values of expr as a list.
 (define-syntax values~>list
   (syntax-rules ()
     ((_ expr)
@@ -77,21 +84,19 @@
 (define always (constantly #t))
 (define never (constantly #f))
 
-;; Verify that a Maybe is a Just of 'z, a dummy object
+;; Verify that a Maybe is a Just of 'z, a dummy object.
 (define (just-of-z? m)
   (and (maybe? m) (maybe= eqv? m (just 'z))))
 
-;; Verify that an Either is a Right of 'z, a dummy object
+;; Verify that an Either is a Right of 'z, a dummy object.
 (define (right-of-z? e)
   (and (either? e) (either= eqv? e (right 'z))))
 
-;; Verify that an Either is a Left of 'z, a dummy object
+;; Verify that an Either is a Left of 'z, a dummy object.
 (define (left-of-z? e)
   (and (either? e) (either= eqv? e (left 'z))))
-
-
-
-;;; Tests
+
+;;;; Tests
 
 (define (check-misc)
   ;; Uniqueness of the Nothing object.
@@ -101,22 +106,24 @@
   (check (either= eqv? (right #t #t) (either-swap (left #t #t))) => #t)
   (check (either= eqv? (left #t #t) (either-swap (right #t #t))) => #t))
 
-;;; Predicates
+;;;; Predicates
 
 (define (check-predicates)
-  (check (just? (just 1))     => #t)
+  (print-header "Testing predicates...")
+
+  (check (just? (just 'z))    => #t)
   (check (just? (nothing))    => #f)
-  (check (nothing? (just 1))  => #f)
+  (check (nothing? (just 'z)) => #f)
   (check (nothing? (nothing)) => #t)
-  (check (maybe? (just 1))    => #t)
+  (check (maybe? (just 'z))   => #t)
   (check (maybe? (nothing))   => #t)
 
-  (check (right? (right 1))  => #t)
-  (check (right? (left 1))   => #f)
-  (check (left? (right 1))   => #f)
-  (check (left? (left 1))    => #t)
-  (check (either? (right 1)) => #t)
-  (check (either? (left 1))  => #t)
+  (check (right? (right 'z))  => #t)
+  (check (right? (left 'z))   => #f)
+  (check (left? (right 'z))   => #f)
+  (check (left? (left 'z))    => #t)
+  (check (either? (right 'z)) => #t)
+  (check (either? (left 'z))  => #t)
 
   (check (maybe= eqv? (just #t) (just #t)) => #t)
   (check (maybe= eqv? (just #t) (just #f)) => #f)
@@ -140,10 +147,12 @@
   (check (either= eqv? (left #t #f) (left #t 'z))   => #f)
   (check (either= eqv? (left #t #f) (left #t))      => #f)
   (check (either= eqv? (left #t #f) (right #t #f))  => #f))
-
-;;; Accessors
+
+;;;; Accessors
 
 (define (check-accessors)
+  (print-header "Testing accessors...")
+
   (check (maybe-ref (just #t))                       => #t)
   (check (catch-exceptions (maybe-ref (nothing)))    => 'exception)
   (check (maybe-ref (nothing) (lambda () #f))        => #f)
@@ -170,12 +179,16 @@
 
   (check (either-ref/default (right #t) #f) => #t)
   (check (either-ref/default (left #t) #f)  => #f)
-  (check (values~>list (either-ref/default (right #t #t) #f #f)) => '(#t #t))
-  (check (values~>list (either-ref/default (left #t) #f #f))     => '(#f #f)))
+  (check (values~>list (either-ref/default (right #t #t) #f #f))
+    => '(#t #t))
+  (check (values~>list (either-ref/default (left #t) #f #f))
+    => '(#f #f)))
 
-;;; Join and bind
+;;;; Join and bind
 
 (define (check-join-and-bind)
+  (print-header "Testing join and bind...")
+
   ;; maybe-join
   (check (just-of-z? (maybe-join (just (just 'z)))) => #t)
   (check (nothing? (maybe-join (just (nothing))))   => #t)
@@ -200,7 +213,7 @@
   (check (let ((m (just #t #f)))
            (maybe= eqv? m (maybe-bind m just)))
     => #t)
-
+
   ;; Associativity of bind.
   (let ((k (lambda (n) (just (* n 2))))
         (h (lambda (n) (just (+ n 5))))
@@ -212,7 +225,8 @@
 
   ;; Bind with multiple mprocs.
   (let ((neg (lambda (b) (just (not b)))))
-    (check (maybe= eqv? (just #f) (maybe-bind (just #t) neg neg neg)) => #t)
+    (check (maybe= eqv? (just #f) (maybe-bind (just #t) neg neg neg))
+      => #t)
     (check (nothing? (maybe-bind (just #t) neg (constantly (nothing)) neg))
       => #t))
 
@@ -245,7 +259,8 @@
 
   ;; Bind with multiple mprocs.
   (let ((neg (lambda (b) (right (not b)))))
-    (check (either= eqv? (right #f) (either-bind (right #t) neg neg neg)) => #t)
+    (check (either= eqv? (right #f) (either-bind (right #t) neg neg neg))
+      => #t)
     (check (either= eqv? (left #f) (either-bind (right #t) neg left neg))
       => #t))
 
@@ -257,10 +272,12 @@
   (let ((neg (lambda (b) (right (not b)))))
     (check (either= eqv? (right #t) ((either-compose neg neg neg) (right #f)))
       => #t)))
-
-;;; Sequence operations
+
+;;;; Sequence operations
 
 (define (check-sequence-operations)
+  (print-header "Testing sequence operations...")
+
   (define (both b c) (and b c))
 
   (check (maybe-length (nothing)) => 0)
@@ -320,10 +337,12 @@
                                           list)
                          (right '((1 #t) (2 #f))))
     => #t))
-
-;;; Conversion procedures
+
+;;;; Conversion procedures
 
 (define (check-conversions)
+  (print-header "Testing conversions...")
+
   ;; maybe->either and either->maybe
   (check (left-of-z? (maybe->either (nothing) 'z))                    => #t)
   (check (right-of-z? (maybe->either (just 'z) #f))                   => #t)
@@ -386,10 +405,12 @@
   (check (left-of-z? (values->either (lambda () (values #t #f))'z))   => #t)
   (check (catch-exceptions (values->either (lambda () (values #t #f #t)) 'z))
    => 'exception))
-
-;;; Map, fold, and unfold
+
+;;;; Map, fold, and unfold
 
 (define (check-map-fold-and-unfold)
+  (print-header "Testing maps, folds, and unfolds...")
+
   ;; maybe-map
   (check (nothing? (maybe-map not (nothing)))              => #t)
   (check (maybe= eqv? (just #f) (maybe-map not (just #t))) => #t)
@@ -397,11 +418,13 @@
   (check (maybe= eqv? (just #t #f) (maybe-map values (just #t #f))) => #t)
 
   ;; either-map
-  ; Verify that the result is the same Left (in the sense of eqv?).
+  ;; Verify that the result is the same Left (in the sense of eqv?).
   (check (let ((e (left #t))) (eqv? e (either-map not e)))     => #t)
   (check (either= eqv? (right #f) (either-map not (right #t))) => #t)
 
-  (check (let ((e (right #t #f))) (either= eqv? e (either-map values e))) => #t)
+  (check (let ((e (right #t #f)))
+           (either= eqv? e (either-map values e)))
+    => #t)
 
   ;; maybe-for-each
   (check (let ((x #f))
@@ -419,7 +442,7 @@
            (either-for-each (lambda (y) (set! x y)) (right #t))
            x)
     => #t)
-  ; Given a Left, ensure the proc argument is not executed.
+  ;; Given a Left, ensure the proc argument is not executed.
   (check (let ((x #f))
            (either-for-each (lambda (_) (set! x #t)) (left 'z))
            x)
@@ -433,22 +456,26 @@
   (check (either-fold cons '() (right #t)) => '(#t))
   (check (either-fold * 2 (right 3 4))     => 24)
 
-  (check (nothing? (maybe-unfold always not #f #f))              => #t)
-  (check (maybe= eqv? (just #t) (maybe-unfold never not #f #f))  => #t)
+  (check (nothing? (maybe-unfold always not #f #f))             => #t)
+  (check (maybe= eqv? (just #t) (maybe-unfold never not #f #f)) => #t)
 
-  (check (left-of-z? (either-unfold always not #f 'z))               => #t)
-  (check (either= eqv? (right #t) (either-unfold never not #f #f))   => #t))
-
-;;; Conditional syntax
+  (check (left-of-z? (either-unfold always not #f 'z))             => #t)
+  (check (either= eqv? (right #t) (either-unfold never not #f #f)) => #t))
+
+;;;; Conditional syntax
 
 (define (check-syntax)
+  (print-header "Testing syntax...")
+
   (check (maybe-if (just #t) #t #f)             => #t)
   (check (maybe-if (nothing) #t #f)             => #f)
   (check (catch-exceptions (maybe-if 'z #t #f)) => 'exception))
 
-;;; Trivalent logic
+;;;; Trivalent logic
 
 (define (check-trivalent)
+  (print-header "Testing trivalent logic...")
+
   (define (tri-true? m)
     (and (just? m) (maybe-ref m)))
 
@@ -476,13 +503,13 @@
     (check (maybe= eqv? m-true (tri-or (just #f) m-true))    => #t))
   (check (tri-false? (tri-or))                               => #t)
 
-  (check (nothing? (tri-merge (nothing) (nothing) (nothing)))    => #t)
+  (check (nothing? (tri-merge (nothing) (nothing) (nothing)))  => #t)
   (let ((m-true (just 'x)))
-    (check (maybe= eqv? m-true (tri-merge (nothing) m-true))     => #t))
+    (check (maybe= eqv? m-true (tri-merge (nothing) m-true))   => #t))
   (let ((m-false (just #f)))
-    (check (maybe= eqv? m-false (tri-merge (nothing) m-false))   => #t))
-  (check (nothing? (tri-merge))                                  => #t))
-
+    (check (maybe= eqv? m-false (tri-merge (nothing) m-false)) => #t))
+  (check (nothing? (tri-merge))                                => #t))
+
 (define (check-all)
   (check-misc)
   (check-predicates)
