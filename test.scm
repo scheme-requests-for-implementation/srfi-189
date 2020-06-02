@@ -276,9 +276,9 @@
 ;;;; Sequence operations
 
 (define (check-sequence-operations)
-  (print-header "Testing sequence operations...")
-
   (define (both b c) (and b c))
+
+  (print-header "Testing sequence operations...")
 
   (check (maybe-length (nothing)) => 0)
   (check (maybe-length (just #t)) => 1)
@@ -458,9 +458,18 @@
 
   (check (nothing? (maybe-unfold always not #f #f))             => #t)
   (check (maybe= eqv? (just #t) (maybe-unfold never not #f #f)) => #t)
+  (check (maybe= eqv? (just #t 'z)
+                      (maybe-unfold never values #f #t 'z))
+    => #t)
 
   (check (left-of-z? (either-unfold always not #f 'z))             => #t)
-  (check (either= eqv? (right #t) (either-unfold never not #f #f)) => #t))
+  (check (either= eqv? (right #t) (either-unfold never not #f #f)) => #t)
+  (check (either= eqv? (right #t 'z)
+                       (either-unfold never values #f #t 'z))
+    => #t)
+  (check (either= eqv? (left #t 'z)
+                       (either-unfold always values #f #t 'z))
+    => #t))
 
 ;;;; Conditional syntax
 

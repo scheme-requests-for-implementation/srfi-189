@@ -387,10 +387,12 @@
 
 ;; The unused `successor' argument is for consistency only and may
 ;; be anything.
-(define (maybe-unfold stop? mapper successor seed)
+(define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
-  (if (stop? seed) nothing-obj (just (mapper seed))))
+  (if (apply stop? seeds)
+      nothing-obj
+      (call-with-values (lambda () (apply mapper seeds)) just)))
 
 (define (either-map proc either)
   (assume (procedure? proc))
@@ -415,10 +417,12 @@
 
 ;; The unused `successor' argument is for consistency only and may
 ;; be anything.
-(define (either-unfold stop? mapper successor seed)
+(define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
-  (if (stop? seed) (left seed) (right (mapper seed))))
+  (if (apply stop? seeds)
+      (apply left seeds)
+      (call-with-values (lambda () (apply mapper seeds)) right)))
 
 ;;;; Conditional syntax
 
