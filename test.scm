@@ -484,13 +484,13 @@
 ;;;; Trivalent logic
 
 (define (check-trivalent)
-  (print-header "Testing trivalent logic...")
-
   (define (tri-true? m)
     (and (just? m) (maybe-ref m)))
 
   (define (tri-false? m)
     (and (just? m) (not (maybe-ref m))))
+
+  (print-header "Testing trivalent logic...")
 
   (check (tri-true? (tri-not (just #f)))  => #t)
   (check (tri-false? (tri-not (just #t))) => #t)
@@ -530,7 +530,7 @@
   (check-map-fold-and-unfold)
   (check-syntax)
   (check-trivalent)
-  
+
   (check-report))
 
 (check-all)
