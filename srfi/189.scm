@@ -145,7 +145,6 @@
 
 ;; If maybe is a Just containing a single Maybe, return that Maybe.
 (define (maybe-join maybe)
-  (assume (maybe? maybe))
   (maybe-ref maybe
              nothing
              (lambda objs
@@ -170,12 +169,10 @@
 (define (maybe-compose . mprocs)
   (assume (pair? mprocs))
   (lambda (maybe)
-    (assume (maybe? maybe))
     (apply maybe-bind maybe mprocs)))
 
 ;; If either is a Right containing a single Either, return that Either.
 (define (either-join either)
-  (assume (either? either))
   (either-ref either
               (const either)
               (lambda objs
@@ -200,7 +197,6 @@
 (define (either-compose . mprocs)
   (assume (pair? mprocs))
   (lambda (either)
-    (assume (either? either))
     (apply either-bind either mprocs)))
 
 
@@ -212,18 +208,19 @@
 
 (define (maybe-filter pred maybe)
   (assume (procedure? pred))
-  (assume (maybe? maybe))
   (maybe-bind maybe
               (lambda objs
                 (if (apply pred objs) maybe nothing-obj))))
 
 (define (maybe-remove pred maybe)
   (assume (procedure? pred))
-  (assume (maybe? maybe))
   (maybe-bind maybe
               (lambda objs
                 (if (apply pred objs) nothing-obj maybe))))
 
+;; Traverse a `container' of Maybes with `cmap', collect the payload
+;; objects with `aggregator', and wrap the new collection in a Just.
+;; If a Nothing is encountered while traversing, return it immediately.
 (define maybe-sequence
   (case-lambda
    ((container cmap) (maybe-sequence container cmap list))
@@ -256,6 +253,9 @@
               (lambda objs
                 (if (apply pred objs) (left obj) either))))
 
+;; Traverse a `container' of Eithers with `cmap', collect the payload
+;; objects with `aggregator', and wrap the new collection in a Right.
+;; If a Left is encountered while traversing, return it immediately.
 (define either-sequence
   (case-lambda
    ((container cmap) (either-sequence container cmap list))
@@ -271,19 +271,17 @@
 ;;;; Conversion
 
 (define (maybe->either maybe obj)
-  (assume (maybe? maybe))
   (maybe-ref maybe (lambda () (left obj)) right))
 
 (define (either->maybe either)
-  (assume (either? either))
   (either-ref either (const nothing-obj) just))
 
 (define (list->just lis)
-  (assume (list? lis))
+  (assume (or (null? lis) (pair? lis)))
   (apply just lis))
 
 (define (list->right lis)
-  (assume (list? lis))
+  (assume (or (null? lis) (pair? lis)))
   (apply right lis))
 
 (define (maybe->list maybe)
@@ -294,8 +292,8 @@
   (assume (either? either))
   ((if (right? either) right-objs left-objs) either))
 
+;; If `maybe' is a Just, return its payload; otherwise, return false.
 (define (maybe->lisp maybe)
-  (assume (maybe? maybe))
   (maybe-ref maybe
              (lambda () #f)
              (lambda objs
@@ -305,8 +303,9 @@
 (define (lisp->maybe obj)
   (if obj (just obj) nothing-obj))
 
+;; If `maybe' is a Just whose payload is a single value, return that
+;; value.  Otherwise, return EOF.
 (define (maybe->eof maybe)
-  (assume (maybe? maybe))
   (maybe-ref maybe
              (lambda () (eof-object))
              (lambda objs
@@ -317,11 +316,11 @@
   (if (eof-object? obj) nothing-obj (just obj)))
 
 (define (maybe->values maybe)
-  (assume (maybe? maybe))
   (maybe-ref maybe values values))
 
+;; If `maybe' is a Just whose payload is a single value, return that
+;; value and #t.  Otherwise, return two false values.
 (define (maybe->lisp-values maybe)
-  (assume (maybe? maybe))
   (maybe-ref maybe
              (lambda () (values #f #f))
              (lambda objs
@@ -340,11 +339,11 @@
     (xs (error "values->maybe: too many values" xs)))))
 
 (define (either->values either)
-  (assume (either? either))
   (either-ref either (const (values)) values))
 
+;; If `either' is a Right whose payload is a single value, return that
+;; value and #t.  Otherwise, return two false values.
 (define (either->lisp-values either)
-  (assume (either? either))
   (either-ref either
               (const (values #f #f))
               (lambda objs
@@ -366,20 +365,17 @@
 
 (define (maybe-map proc maybe)
   (assume (procedure? proc))
-  (assume (maybe? maybe))
   (maybe-bind maybe (lambda objs
                       (call-with-values (lambda () (apply proc objs))
                                         just))))
 
 (define (maybe-for-each proc maybe)
   (assume (procedure? proc))
-  (assume (maybe? maybe))
   (maybe-bind maybe proc)
   unspecified)
 
 (define (maybe-fold kons nil maybe)
   (assume (procedure? kons))
-  (assume (maybe? maybe))
   (maybe-ref maybe
              (lambda () nil)
              (lambda objs  ; apply kons to all payload values plus nil
@@ -396,20 +392,17 @@
 
 (define (either-map proc either)
   (assume (procedure? proc))
-  (assume (either? either))
   (either-bind either (lambda objs
                         (call-with-values (lambda () (apply proc objs))
                                           right))))
 
 (define (either-for-each proc either)
   (assume (procedure? proc))
-  (assume (either? either))
   (either-bind either proc)
   unspecified)
 
 (define (either-fold kons nil either)
   (assume (procedure? kons))
-  (assume (either? either))
   (either-ref either
               (const nil)
               (lambda objs  ; apply kons to all payload values plus nil
@@ -442,7 +435,6 @@
   (not (equal? (just-objs maybe) '(#f))))
 
 (define (tri-not maybe)
-  (assume (maybe? maybe))
   (maybe-bind maybe (lambda (x) (just (not x)))))
 
 ;; Returns #t if all arguments are true or all false.  If any argument
