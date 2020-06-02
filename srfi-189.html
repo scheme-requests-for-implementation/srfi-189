@@ -44,9 +44,9 @@ interpreted as &quot;returns no values&quot;.</p>
 <p>It is common for Scheme procedures that can either succeed or fail
 to return their value on success and <code>#f</code> on failure.  However, if
 the procedure is able to return any value on success, there is no
+way to distinguish between a successful return of <code>#f</code> and failure.
 For example, the SRFI 1 procedure <code>find</code> returns
-<code>#f</code> way to distinguish between a successful return of
-<code>#f</code> and failure.  when it fails, but that makes using
+when it fails, but that makes using
 it to search for <code>#f</code> in a list impossible.
 What is more, it is easy for the programmer to write code in which
 success is assumed and the special case of <code>#f</code> is not handled
