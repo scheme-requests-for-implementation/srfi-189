@@ -279,7 +279,7 @@ automatically discarded if the continuation expects only one.)</p>
 <code>(lisp-values-&gt;either</code> <em>producer obj</em><code>)</code></p>
 <p>The <code>lisp-values-&gt;maybe</code> procedure is the inverse of
 <code>maybe-&gt;lisp-values</code>,
-and correspondingly for <code>values-&gt;either</code>.
+and correspondingly for <code>lisp-values-&gt;either</code>.
 They invoke <em>producer</em> with no arguments.
 If no values are returned, Nothing / Left of <em>obj</em> is returned.
 Otherwise the values are wrapped in a Just/Right and returned.</p>
