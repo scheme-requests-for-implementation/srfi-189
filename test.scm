@@ -69,11 +69,7 @@
 (define-syntax catch-exceptions
   (syntax-rules ()
     ((_ expr)
-     (call-with-current-continuation
-      (lambda (k)
-        (with-exception-handler
-         (lambda (_) (k 'exception))
-         (lambda () expr)))))))
+     (exception-satisfies (constantly 'exception) expr))))
 
 ;; If an exception is raised by expr, gives the result of applying pred
 ;; to the raised object.
@@ -544,4 +540,4 @@
 
   (check-report))
 
-;(check-all)
+(check-all)
