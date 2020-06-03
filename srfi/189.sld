@@ -33,6 +33,7 @@
 
   (export maybe? either? just nothing left right nothing? just? maybe= left?
           right? either= either-swap
+          maybe-ref-error?
 
           maybe-ref maybe-ref/default either-ref either-ref/default
 

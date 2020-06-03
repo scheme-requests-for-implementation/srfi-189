@@ -75,6 +75,17 @@
          (lambda (_) (k 'exception))
          (lambda () expr)))))))
 
+;; If an exception is raised by expr, gives the result of applying pred
+;; to the raised object.
+(define-syntax exception-satisfies
+  (syntax-rules ()
+    ((_ pred expr)
+     (call-with-current-continuation
+      (lambda (k)
+        (with-exception-handler
+         (lambda (obj) (k (pred obj)))
+         (lambda () expr)))))))
+
 ;; Gives the values of expr as a list.
 (define-syntax values~>list
   (syntax-rules ()
@@ -154,7 +165,7 @@
   (print-header "Testing accessors...")
 
   (check (maybe-ref (just #t))                       => #t)
-  (check (catch-exceptions (maybe-ref (nothing)))    => 'exception)
+  (check (exception-satisfies maybe-ref-error? (maybe-ref (nothing))) => #t)
   (check (maybe-ref (nothing) (lambda () #f))        => #f)
   (check (maybe-ref (just #t) (lambda () #f) values) => #t)
   (check (maybe-ref (nothing) (lambda () #f) values) => #f)
@@ -533,4 +544,4 @@
 
   (check-report))
 
-(check-all)
+;(check-all)

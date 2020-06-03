@@ -42,6 +42,11 @@
 
 (define (nothing)
   nothing-obj)
+
+;; Error type for objects raised by maybe-ref.
+(define-record-type <maybe-ref-error>
+  (maybe-ref-error)
+  maybe-ref-error?)
 
 ;;;; Utility
 
@@ -110,8 +115,7 @@
 
 (define maybe-ref
   (case-lambda
-   ((maybe) (maybe-ref maybe (lambda ()
-                               (error "maybe-ref: failure" maybe))))
+   ((maybe) (maybe-ref maybe (lambda () (raise (maybe-ref-error)))))
    ((maybe failure) (maybe-ref maybe failure values))
    ((maybe failure success)
     (assume (maybe? maybe))
