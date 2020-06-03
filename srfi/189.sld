@@ -33,6 +33,7 @@
 
   (export maybe? either? just nothing left right nothing? just? maybe= left?
           right? either= either-swap
+          maybe-ref-error?
 
           maybe-ref maybe-ref/default either-ref either-ref/default
 
@@ -46,6 +47,7 @@
           maybe->either either->maybe list->just list->right maybe->list
           either->list maybe->lisp lisp->maybe maybe->values maybe->lisp-values
           values->maybe either->values either->lisp-values values->either
+          lisp-values->maybe lisp-values->either
           maybe-for-each either-for-each maybe->eof eof->maybe
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
