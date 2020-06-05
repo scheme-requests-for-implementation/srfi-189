@@ -247,7 +247,7 @@
   (either-ref either
               (const (raw-left default-objs))
               (lambda objs
-                (if (apply pred objs) either (left obj)))))
+                (if (apply pred objs) either (raw-left default-objs)))))
 
 (define (either-remove pred either . default-objs)
   (assume (procedure? pred))
@@ -255,7 +255,7 @@
   (either-ref either
               (const (raw-left default-objs))
               (lambda objs
-                (if (apply pred objs) (left obj) either))))
+                (if (apply pred objs) (raw-left default-objs) either))))
 
 ;; Traverse a `container' of Eithers with `cmap', collect the payload
 ;; objects with `aggregator', and wrap the new collection in a Right.
