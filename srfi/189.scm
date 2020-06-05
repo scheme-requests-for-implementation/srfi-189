@@ -241,19 +241,19 @@
   (assume (either? either))
   (if (right? either) 1 0))
 
-(define (either-filter pred either obj)
+(define (either-filter pred either . default-objs)
   (assume (procedure? pred))
   (assume (either? either))
   (either-ref either
-              (const (left obj))
+              (const (raw-left default-objs))
               (lambda objs
                 (if (apply pred objs) either (left obj)))))
 
-(define (either-remove pred either obj)
+(define (either-remove pred either . default-objs)
   (assume (procedure? pred))
   (assume (either? either))
   (either-ref either
-              (const (left obj))
+              (const (raw-left default-objs))
               (lambda objs
                 (if (apply pred objs) (left obj) either))))
 
@@ -274,8 +274,8 @@
 
 ;;;; Conversion
 
-(define (maybe->either maybe obj)
-  (maybe-ref maybe (lambda () (left obj)) right))
+(define (maybe->either maybe . default-objs)
+  (maybe-ref maybe (lambda () (raw-left default-objs)) right))
 
 (define (either->maybe either)
   (either-ref either (const nothing-obj) just))
@@ -287,6 +287,10 @@
 (define (list->right lis)
   (assume (or (null? lis) (pair? lis)))
   (apply right lis))
+
+(define (list->left lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-left lis))
 
 (define (maybe->list maybe)
   (assume (maybe? maybe))
@@ -340,20 +344,15 @@
      (if (null? objs) nothing-obj (raw-just objs)))))
 
 (define (lisp-values->maybe producer)
-  (values->maybe producer))
+  (call-with-values
+   producer
+   (case-lambda
+     ((obj success)
+      (if success (just obj) nothing-obj))
+     (vals (error "lisp-values->maybe: wrong number of values" vals)))))
 
 (define (either->values either)
   (either-ref either (const (values)) values))
-
-;; If `either' is a Right whose payload is a single value, return that
-;; value and #t.  Otherwise, return two false values.
-(define (either->lisp-values either)
-  (either-ref either
-              (const (values #f #f))
-              (lambda objs
-                (ensure-singleton objs
-                                  "either->lisp-values: invalid payload")
-                (values (car objs) #t))))
 
 (define (values->either producer obj)
   (assume (procedure? producer))
@@ -361,9 +360,6 @@
    producer
    (lambda objs
      (if (null? objs) (left obj) (raw-right objs)))))
-
-(define (lisp-values->either producer obj)
-  (values->either producer obj))
 
 ;;;; Map, fold, and unfold
 
