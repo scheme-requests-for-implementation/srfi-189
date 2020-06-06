@@ -282,11 +282,11 @@
 
 (define (list->just lis)
   (assume (or (null? lis) (pair? lis)))
-  (apply just lis))
+  (raw-just lis))
 
 (define (list->right lis)
   (assume (or (null? lis) (pair? lis)))
-  (apply right lis))
+  (raw-right lis))
 
 (define (list->left lis)
   (assume (or (null? lis) (pair? lis)))
