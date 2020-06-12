@@ -48,7 +48,7 @@ interpreted as &quot;returns no values&quot;.</p>
 to return their value on success and <code>#f</code> on failure.  However, if
 the procedure is able to return any value on success, there is no
 way to distinguish between a successful return of <code>#f</code> and failure.
-For example, the SRFI 1 procedure <code>find</code> returns <code>#f</code>code>
+For example, the SRFI 1 procedure <code>find</code> returns <code>#f</code>
 when it fails, but that makes using
 it to search for <code>#f</code> in a list impossible.
 What is more, it is easy for the programmer to write code in which
@@ -95,7 +95,7 @@ payload.</p>
 <p><em>failure</em>: A procedure that accepts zero arguments (unless specified otherwise).</p>
 <p><em>success</em>: A procedure that accepts one or more arguments.</p>
 <p><em>pred</em>: A predicate that accepts zero or more arguments.</p>
-<p><em>equal</em>: An predicate that accepts two arguments
+<p><em>equal</em>: A predicate that accepts two arguments
 and returns a boolean value.  It is not necessarily an equivalence relation.</p>
 <p><em>proc</em>: A procedure that accepts zero or more arguments and returns
 zero or more values.</p>
@@ -203,8 +203,8 @@ of the container and not on the number of objects it contains.</p>
 <code>(either-filter</code> <em>pred either obj</em> ...<code>)</code><br>
 <code>(either-remove</code> <em>pred either obj</em> ...<code>)</code></p>
 <p>If <em>maybe/either</em> is a Just/Right and the values of its payload
-satisfy / does not satisfy <em>pred</em>, then
-return <em>maybe</em>; otherwise, returns Nothing / a Left of <em>objs</em>.</p>
+satisfy / do not satisfy <em>pred</em>, then
+return <em>maybe/either</em>; otherwise, returns Nothing / a Left of <em>objs</em>.</p>
 <p><code>(maybe-sequence</code> <em>traversable map [aggregator]</em><code>)</code><br>
 <code>(either-sequence</code> <em>traversable map [aggregator]</em><code>)</code></p>
 <p>The purpose of these procedures is to transform a sequenceable
@@ -235,7 +235,7 @@ in the sense of <code>eqv?</code>; otherwise returns Nothing.</p>
 <code>(list-&gt;right</code> <em>list</em><code>)</code></p>
 <p>Returns a Just / Left / Right whose values are the elements
 of <em>list</em>.  Note that these procedures are not monadic;
-they are equivalent to <code>just/right</code> but accept
+they are equivalent to <code>just/left/right</code> but accept
 a list rather than multiple arguments.
 There is no need for <code>list-&gt;nothing</code> distinct
 from <code>nothing</code>.</p>
@@ -392,7 +392,7 @@ and can handle an argument that is either an actual pair or Just a pair.
 (define (head x)
   (cond
     ((pair? x) (just (car x)))
-    ((and (right? x) (pair? (maybe-ref x))) (just (car (maybe-ref x))))
+    ((and (just? x) (pair? (maybe-ref x))) (just (car (maybe-ref x))))
     (else (nothing))))
 </pre>
 <p>In other words, if the argument to <code>head</code> is a pair,
