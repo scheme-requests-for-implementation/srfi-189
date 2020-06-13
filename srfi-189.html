@@ -204,24 +204,30 @@ of the container and not on the number of objects it contains.</p>
 <p>If <em>maybe/either</em> is a Just/Right and the values of its payload
 satisfy / does not satisfy <em>pred</em>, then
 return <em>maybe</em>; otherwise, returns Nothing / a Left of <em>objs</em>.</p>
-<p><code>(maybe-sequence</code> <em>traversable map [aggregator]</em><code>)</code><br>
-<code>(either-sequence</code> <em>traversable map [aggregator]</em><code>)</code></p>
-<p>The purpose of these procedures is to transform a sequenceable
+<p><code>(maybe-sequence</code> <em>mappable map [aggregator]</em><code>)</code><br>
+<code>(either-sequence</code> <em>mappable map [aggregator]</em><code>)</code></p>
+<p>The purpose of these procedures is to transform a
 collection of Maybes/Eithers of some particular type into a Maybe/Either
-of a sequenceable collection, usually of the same type.</p>
-<p>The <em>aggregator</em> function, which defaults to <code>list</code>,
-accepts multiple arguments and returns one value.  It is applied to the values of every
-element of <em>traversable</em> in turn, and <em>map</em>
-(which accepts one argument and returns one value) is used to
-construct the new traversable.  If all the elements are Just/Right,
-the new traversable is wrapped in a Just/Right and returned.</p>
+of a collection, often of the same type.</p>
+<p>The <em>mappable</em> argument is the collection to be transformed,
+and the <em>map</em> argument is the appropriate procedure that can
+transform it, one element at a time.
+The signature of <em>map</em> is <code>(</code><em>map proc mappable</em><code>)</code>,
+where <em>proc</em> is supplied by the implementation.
+Typical mappables are lists and vectors, and <code>map</code> and <code>vector-map</code>
+are useful map functions, though not the only possible ones.</p>
+<p>Each element is processed as follows:  If it is a Just/Right, its values are
+unwrapped and the <em>aggregator</em> function (which defaults to <code>list</code>)
+is applied to them.  
+But if it is a Left/Nothing, that object is immediately returned as the value of
+<code>maybe-sequence/either-sequence</code>.</p>
+<p>Assuming there are no Lefts/Nothings, the <em>map</em> function is then responsible
+for contructing the new mappable out of the results of the calls on <em>aggregator</em>.</p>
 <p>For example, a list of Justs becomes a Just list of lists if 
 the map procedure is <code>map</code> and the aggregator is <code>list</code>.
 In the same way, a vector of Rights containing one value each becomes
 a Right vector if the map procedure is <code>vector-map</code>
 and the aggregator is <code>(lambda (x) x)</code>.</p>
-<p>But if any of the elements are Nothing/Left, the first such element
-is returned immediately.</p>
 <h3 id="conversion">Conversion</h3>
 <p><code>(maybe-&gt;either</code> <em>maybe obj</em> ...<code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns a Right with the same payload objects
@@ -234,25 +240,30 @@ in the sense of <code>eqv?</code>; otherwise returns Nothing.</p>
 <code>(list-&gt;right</code> <em>list</em><code>)</code></p>
 <p>Returns a Just / Left / Right whose values are the elements
 of <em>list</em>.  Note that these procedures are not monadic;
-they are equivalent to <code>just/right</code> but accept
+they are equivalent to <code>just/left/right</code> but accept
 a list rather than multiple arguments.
 There is no need for <code>list-&gt;nothing</code> distinct
 from <code>nothing</code>.</p>
+<p><em>The following procedures interface between the Maybe protocol
+and a protocol that uses a non-empty list of values for success
+and an empty list for failure.</em></p>
 <p><code>(maybe-&gt;list</code> <em>maybe</em><code>)</code><br>
 <code>(either-&gt;list</code> <em>either</em><code>)</code></p>
 <p>Returns a list whose elements are the payload of <em>maybe/either</em>;
 if <em>maybe</em> is Nothing, returns the empty list.
 It is an error to mutate the result of this procedure.</p>
+<p><em>The following procedures interface between the Maybe protocol and
+the frequently used Lisp and Scheme protocol that uses <code>#f</code> to represent failure
+and a single true value to represent success.</em></p>
 <p><code>(maybe-&gt;lisp</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns its payload; otherwise returns <code>#f</code>.
-This converts a Maybe to the usual Lisp and Scheme protocol of returning a
-true object for success or <code>#f</code> for failure.
 It is an error if a Just does not have exactly one value.</p>
 <p><code>(lisp-&gt;maybe</code> <em>obj</em><code>)</code></p>
 <p>If <em>obj</em> is <code>#f</code>, return Nothing; otherwise, return a Just whose
 payload is <em>obj</em>.
-This converts the usual Lisp and Scheme protocol of returning
-a true object for success or <code>#f</code> for failure to a Maybe.</p>
+<p><em>The following procedures interface between the Maybe protocol
+and the protocol used by generators, which return an end-of-file object
+to signal termination and any other object as a generated value.</em></p>
 <p><code>(maybe-&gt;eof</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, then its payload is returned.
 It is an error if a Just does not have exactly one value.
@@ -263,26 +274,32 @@ SRFI 158</a> accumulator to accept Maybes.
 If <em>obj</em> is an end-of-file object, return Nothing.
 Otherwise, return <em>obj</em> wrapped in a Just.
 This wraps a SRFI 158 generator to produce Maybes.
+<p><em>The following procedures interface between the Maybe and Either protocols
+and a protocol that returns multiple values (often a fixed number of them)
+on success and no values on failure.</em></p>
 <p><code>(maybe-&gt;values</code> <em>maybe</em><code>)</code><br>
 <code>(either-&gt;values</code> <em>either</em><code>)</code></p>
 <p>If <em>maybe/either</em> is a Just/Right, returns the values of its payload;
 otherwise returns no values.</p>
 <p><code>(values-&gt;maybe</code> <em>producer</em><code>)</code><br>
-<code>(values-&gt;either</code> <em>producer obj</em><code>)</code></p>
+<code>(values-&gt;either</code> <em>producer obj</em> ...<code>)</code></p>
 <p>The <code>values-&gt;maybe</code> procedure is the inverse of
 <code>maybe-&gt;values</code>,
 and correspondingly for <code>values-&gt;either</code>.
 They invoke <em>producer</em> with no arguments.
-If no values are returned, Nothing / Left of <em>obj</em> is returned.
+If no values are returned, Nothing / Left of <em>objs</em> is returned.
 Otherwise the values are wrapped in a Just/Right and returned.</p>
+<p><em>The following procedures interface between the Maybe protocol
+and a protocol that returns two values.  On success the first value
+is the intended result and the second value is <code>#t</code>;
+on failure, both values are <code>#f</code>.  This protocol is
+more often used in Common Lisp, where additional values are
+automatically discarded if the continuation expects only one.)</em></p>
 <p><code>(maybe-&gt;lisp-values</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns the value of its payload and
 the additional value <code>#t</code>;
 otherwise returns two values, both <code>#f</code>.
 It is an error if <em>maybe</em> does not have exactly one value.
-(This protocol is
-more often used in Common Lisp, where additional values are
-automatically discarded if the continuation expects only one.)</p>
 <p><code>(lisp-values-&gt;maybe</code> <em>producer</em><code>)</code></p>
 <p>This procedure is the inverse of <code>maybe-&gt;lisp-values</code>.
 It invokes <em>producer</em> with no arguments.
