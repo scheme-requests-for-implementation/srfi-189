@@ -99,7 +99,7 @@ and returns a boolean value.  It is not necessarily an equivalence relation.</p>
 <p><em>proc</em>: A procedure that accepts zero or more arguments and returns
 zero or more values.</p>
 <p><em>mproc</em>: A procedure that accepts zero or more arguments
-and returns zero or more values wrapped in a container.</p>
+and returns zero or more values wrapped in a single container.</p>
 <p><em>list</em>: A Scheme list.</p>
 <p><em>producer</em>: A procedure that accepts no arguments and returns
 zero, one, or two values.</p>
@@ -128,34 +128,28 @@ and <code>#f</code> otherwise.</p>
 <p><code>(either?</code> <em>obj</em><code>)</code></p>
 <p>Returns <code>#t</code> if <em>obj</em> is an Either (that is, either a Right or a Left)
 and <code>#f</code> otherwise.</p>
-<p><code>(maybe=</code> <em>equal maybe1 maybe2</em><code>)</code></p>
-<p>Returns <code>#t</code> if <em>maybe1</em> and <em>maybe2</em> are both Nothing, or if they
-are both Justs and their respective payload objects
+<p><code>(maybe=</code> <em>equal maybe1 maybe2 ...</em><code>)</code></p>
+<p>Returns <code>#t</code> if all <em>maybes</em> are Nothing, or if they all
+are Justs and their respective payload objects
 are the same in the sense of <em>equal</em>,
 and <code>#f</code> otherwise.</p>
-<p><code>(either=</code> <em>equal either1 either2</em><code>)</code></p>
-<p>Returns <code>#t</code> if <em>either1</em> and <em>either2</em> are both Lefts or both Rights
+<p><code>(either=</code> <em>equal either1 either2 ...</em><code>)</code></p>
+<p>Returns <code>#t</code> if all <em>eithers</em> are all Lefts or all Rights
 and their respective payload objects are the same in the sense of <em>equal</em>,
 and <code>#f</code> otherwise.</p>
-<p><code>(maybe-ref-error?</code> <em>obj</em><code>)</code></p>
-<p>Returns <code>#t</code> on any object that can be raised by the
-default <em>failure</em> argument of <code>maybe-ref</code>,
-and <code>#f</code> on all other objects.</p>
 <h3 id="accessors">Accessors</h3>
-<p><code>(maybe-ref</code> <em>maybe</em> [<em>failure</em> [<em>success</em>] ]<code>)</code></p>
+<p><code>(maybe-ref</code> <em>maybe</em> <em>failure</em> [<em>success</em>]<code>)</code></p>
 <p>If <em>maybe</em> is a Just, tail-calls the procedure <em>success</em>
 on the values of its payload and returns the result.  Otherwise, it
 tail-calls the procedure <em>failure</em> on no arguments and
-returns the result.  The default value of <em>failure</em>
-is a procedure that raises an object that satisfies <code>maybe-ref-error?</code>;
-the default value of <em>success</em> is <code>values</code>.</p>
-<p><code>(either-ref</code> <em>either</em> [<em>failure</em> [<em>success</em>] ]<code>)</code></p>
+returns the result.
+The default value of <em>success</em> is <code>values</code>.</p>
+<p><code>(either-ref</code> <em>either</em> <em>failure</em> [<em>success</em>]<code>)</code></p>
 <p>If <em>either</em> is a Right, tail-calls the procedure <em>success</em>
 on the values of its payload and returns the result.  Otherwise, it
 tail-calls the procedure <em>failure</em> on 
 on the values of its payload and returns the result.
-The default value of <em>failure</em> is <code>raise</code>;
-the default value of <em>success</em> is <em>values</em>.</p>
+The default value of <em>success</em> is <em>values</em>.</p>
 <p><code>(maybe-ref/default</code> <em>maybe default</em> ...<code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns the values of its payload; otherwise
 returns the <em>defaults</em> as multiple values.</p>
