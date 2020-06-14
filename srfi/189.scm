@@ -175,8 +175,14 @@
 
 (define (maybe-compose . mprocs)
   (assume (pair? mprocs))
-  (lambda (maybe)
-    (apply maybe-bind maybe mprocs)))
+  (lambda args
+    (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
+      (if (null? rest)
+          (apply mproc args)  ; fast path
+          (maybe-ref (apply mproc args)
+                     nothing
+                     (lambda objs
+                       (lp objs (car rest) (cdr rest))))))))
 
 ;; If either is a Right containing a single Either, return that Either.
 (define (either-join either)
@@ -203,9 +209,14 @@
 
 (define (either-compose . mprocs)
   (assume (pair? mprocs))
-  (lambda (either)
-    (apply either-bind either mprocs)))
-
+  (lambda args
+    (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
+      (if (null? rest)
+          (apply mproc args)  ; fast path
+          (either-ref (apply mproc args)
+                      left
+                      (lambda objs
+                        (lp objs (car rest) (cdr rest))))))))
 
 ;;;; Sequence operations
 

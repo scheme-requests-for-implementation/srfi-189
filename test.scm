@@ -222,12 +222,12 @@
       => #t))
 
   ;; maybe-compose
-  (check (nothing? ((maybe-compose just) (nothing)))   => #t)
-  (check (just-of-z? ((maybe-compose just) (just 'z))) => #t)
+  (check (nothing? ((maybe-compose (constantly (nothing))) 'z)) => #t)
+  (check (just-of-z? ((maybe-compose just) 'z))                 => #t)
 
   ;; Compose with multiple mprocs.
   (let ((neg (lambda (b) (just (not b)))))
-    (check (maybe= eqv? (just #t) ((maybe-compose neg neg neg) (just #f)))
+    (check (maybe= eqv? (just #t) ((maybe-compose neg neg neg) #f))
       => #t))
 
   ;; either-bind
@@ -256,12 +256,12 @@
       => #t))
 
   ;; either-compose
-  (check (left-of-z? ((either-compose right) (left 'z)))               => #t)
-  (check (either= eqv? (right #t) ((either-compose right) (right #t))) => #t)
+  (check (left-of-z? ((either-compose left) 'z))               => #t)
+  (check (either= eqv? (right #t) ((either-compose right) #t)) => #t)
 
   ;; Compose with multiple mprocs.
   (let ((neg (lambda (b) (right (not b)))))
-    (check (either= eqv? (right #t) ((either-compose neg neg neg) (right #f)))
+    (check (either= eqv? (right #t) ((either-compose neg neg neg) #f))
       => #t)))
 
 ;;;; Sequence operations
