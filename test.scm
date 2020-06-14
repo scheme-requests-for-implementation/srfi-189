@@ -69,18 +69,7 @@
 (define-syntax catch-exceptions
   (syntax-rules ()
     ((_ expr)
-     (exception-satisfies (constantly 'exception) expr))))
-
-;; If an exception is raised by expr, gives the result of applying pred
-;; to the raised object.
-(define-syntax exception-satisfies
-  (syntax-rules ()
-    ((_ pred expr)
-     (call-with-current-continuation
-      (lambda (k)
-        (with-exception-handler
-         (lambda (obj) (k (pred obj)))
-         (lambda () expr)))))))
+     (guard (_ (else 'exception)) expr))))
 
 ;; Gives the values of expr as a list.
 (define-syntax values~>list
@@ -160,22 +149,17 @@
 (define (check-accessors)
   (print-header "Testing accessors...")
 
-  (check (maybe-ref (just #t))                       => #t)
-  (check (exception-satisfies maybe-ref-error? (maybe-ref (nothing))) => #t)
   (check (maybe-ref (nothing) (lambda () #f))        => #f)
   (check (maybe-ref (just #t) (lambda () #f) values) => #t)
   (check (maybe-ref (nothing) (lambda () #f) values) => #f)
 
-  (check (values~>list (maybe-ref (just #t #f)))      => '(#t #f))
-  (check (maybe-ref (just #t #f) (lambda () #f) list) => '(#t #f))
+  (check (values~>list (maybe-ref (just #t #f) (lambda () #f))) => '(#t #f))
+  (check (maybe-ref (just #t #f) (lambda () #f) list)           => '(#t #f))
 
-  (check (either-ref (right #t))                        => #t)
-  (check (catch-exceptions (either-ref (left #t)))      => 'exception)
   (check (either-ref (left #t) (constantly #f))         => #f)
   (check (either-ref (right #t) (constantly #f) values) => #t)
   (check (either-ref (left #t) values (constantly #f))  => #t)
 
-  (check (values~>list (either-ref (right #t #f)))       => '(#t #f))
   (check (either-ref (right #t #f) (constantly #f) list) => '(#t #f))
   (check (either-ref (left #t #f) list (constantly #f))  => '(#t #f))
 
@@ -491,10 +475,10 @@
 
 (define (check-trivalent)
   (define (tri-true? m)
-    (and (just? m) (maybe-ref m)))
+    (and (just? m) (maybe-ref/default m 'z)))
 
   (define (tri-false? m)
-    (and (just? m) (not (maybe-ref m))))
+    (and (just? m) (not (maybe-ref/default m 'z))))
 
   (print-header "Testing trivalent logic...")
 
