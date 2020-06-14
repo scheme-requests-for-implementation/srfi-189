@@ -359,12 +359,12 @@
 (define (either->values either)
   (either-ref either (const (values)) values))
 
-(define (values->either producer obj)
+(define (values->either producer . default-objs)
   (assume (procedure? producer))
   (call-with-values
    producer
    (lambda objs
-     (if (null? objs) (left obj) (raw-right objs)))))
+     (if (null? objs) (raw-left default-objs) (raw-right objs)))))
 
 ;;;; Map, fold, and unfold
 
