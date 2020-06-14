@@ -404,9 +404,13 @@
 (define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
-  (if (apply stop? seeds)
-      nothing-obj
-      (call-with-values (lambda () (apply mapper seeds)) just)))
+  (if (singleton? seeds)
+      (if (stop? (car seeds))  ; fast path
+          nothing-obj
+          (just (mapper (car seeds))))
+      (if (apply stop? seeds)
+          nothing-obj
+          (call-with-values (lambda () (apply mapper seeds)) just))))
 
 (define (either-map proc either)
   (assume (procedure? proc))
@@ -431,9 +435,13 @@
 (define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
-  (if (apply stop? seeds)
-      (apply left seeds)
-      (call-with-values (lambda () (apply mapper seeds)) right)))
+  (if (singleton? seeds)
+      (if (stop? (car seeds))  ; fast path
+          (raw-left seeds)
+          (right (mapper (car seeds))))
+      (if (apply stop? seeds)
+          (raw-left seeds)
+          (call-with-values (lambda () (apply mapper seeds)) right))))
 
 ;;;; Conditional syntax
 
