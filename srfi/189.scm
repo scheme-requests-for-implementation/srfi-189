@@ -118,19 +118,16 @@
 
 ;;;; Accessors
 
-(define maybe-ref
-  (case-lambda
-   ((maybe failure) (maybe-ref maybe failure values))
-   ((maybe failure success)
-    (assume (maybe? maybe))
-    (assume (procedure? failure))
-    (assume (procedure? success))
-    (if (just? maybe)
-        (let ((objs (just-objs maybe)))
-          (if (singleton? objs)
-              (success (car objs))
-              (apply success objs)))
-        (failure)))))
+(define (maybe-ref maybe failure . %opt-args)
+  (assume (maybe? maybe))
+  (assume (procedure? failure))
+  (if (just? maybe)
+      (let ((objs (just-objs maybe))
+            (success (if (pair? %opt-args) (car %opt-args) values)))
+        (if (singleton? objs)
+            (success (car objs))
+            (apply success objs)))
+      (failure)))
 
 (define (maybe-ref/default maybe . defaults)
   (assume (maybe? maybe))
@@ -141,22 +138,18 @@
           (car defaults)
           (apply values defaults))))
 
-(define either-ref
-  (case-lambda
-   ((either failure) (either-ref either failure values))
-   ((either failure success)
-    (assume (either? either))
-    (assume (procedure? failure))
-    (assume (procedure? success))
-    (if (right? either)
-        (let ((objs (right-objs either)))
-          (if (singleton? objs)
-              (success (car objs))
-              (apply success objs)))
-        (let ((objs (left-objs either)))
-          (if (singleton? objs)
-              (failure (car objs))
-              (apply failure objs)))))))
+(define (%either-ref-single either accessor cont)
+  (let ((objs (accessor either)))
+    (if (singleton? objs) (cont (car objs)) (apply cont objs))))
+
+(define (either-ref either failure . %opt-args)
+  (assume (either? either))
+  (assume (procedure? failure))
+  (if (right? either)
+      (%either-ref-single either right-objs (if (pair? %opt-args)
+                                                (car %opt-args)
+                                                values))
+      (%either-ref-single either left-objs failure)))
 
 (define (either-ref/default either . defaults)
   (assume (either? either))
