@@ -82,10 +82,9 @@
 (define (maybe= equal . maybes)
   (assume (procedure? equal))
   (assume (pair? maybes))
-  (let lp ((maybe (car maybes)) (rest (cdr maybes)))
-    (or (null? rest)
-        (and (%maybe=2 equal maybe (car rest))
-             (lp maybe (cdr rest))))))
+  (let lp ((maybe1 (car maybes)))
+    (every (lambda (maybe2) (%maybe=2 equal maybe1 maybe2))
+           (cdr maybes))))
 
 (define (%maybe=2 equal maybe1 maybe2)
   (or (eqv? maybe1 maybe2)  ; Also handles the Nothing = Nothing case.
@@ -105,10 +104,9 @@
 (define (either= equal . eithers)
   (assume (procedure? equal))
   (assume (pair? eithers))
-  (let lp ((either (car eithers)) (rest (cdr eithers)))
-    (or (null? rest)
-        (and (%either=2 equal either (car rest))
-             (lp either (cdr rest))))))
+  (let ((either1 (car eithers)))
+    (every (lambda (either2) (%either=2 equal either1 either2))
+           (cdr eithers))))
 
 (define (%either=2 equal either1 either2)
   (let ((e= (lambda (acc) (list= equal (acc either1) (acc either2)))))
