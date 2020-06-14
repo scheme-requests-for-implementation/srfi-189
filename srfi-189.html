@@ -359,10 +359,11 @@ on the values of its payload and the additional value <em>nil</em>
 and the result is returned; otherwise, <em>nil</em> is returned.</p>
 <p><code>(maybe-unfold</code> <em>stop? mapper successor seed ...</em><code>)</code><br>
 <code>(either-unfold</code> <em>stop? mapper successor seed ...</em><code>)</code></p>
-<p>If <em>stop?</em> returns true on <em>seeds</em>, a Nothing / a Left of <em>seeds</em> is returned.
-Otherwise, <em>mapper</em> is applied to <em>seeds</em>,
-<em>successor</em> is applied to seeds (for side effects only),
-and the results of <em>mapper</em> are wrapped in a Just/Right and returned.</p>
+<p>If <em>stop?</em> returns true on <em>seeds</em>, a Nothing / a Left of <em>seeds</em> is returned;
+otherwise, <em>mapper</em> is applied to <em>seeds</em> and
+the results are wrapped in a Just/Right and returned.
+The <em>successor</em> argument is not used and may be anything;
+it is required in order to preserve the standard protocol for Scheme unfold procedures.</p>
 <h3 id="conditional">Conditional syntax</h3>
 <p><code>(maybe-if</code> <em>maybe-expr just-expr nothing-expr</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 Equivalent to <code>(if (just? </code><em>maybe-expr</em><code>) </code><em>just-expr nothing-expr</em><code>)</code>,
