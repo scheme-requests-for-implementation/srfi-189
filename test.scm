@@ -130,6 +130,12 @@
   (check (maybe= eqv? (just #t #f) (just #t 'z)) => #f)
   (check (maybe= eqv? (just #t #f) (just #t))    => #f)
 
+  (check (maybe= eqv? (just #t) (just #t) (just #t))          => #t)
+  (check (maybe= eqv? (nothing) (nothing) (nothing))          => #t)
+  (check (maybe= eqv? (just #t) (just #t) (nothing))          => #f)
+  (check (maybe= eqv? (just #t) (just #t) (just #f))          => #f)
+  (check (maybe= eqv? (just #t 'z) (just #t 'z) (just #t 'z)) => #t)
+
   (check (either= eqv? (right #t) (right #t)) => #t)
   (check (either= eqv? (right #t) (right #f)) => #f)
   (check (either= eqv? (left #t) (left #t))   => #t)
@@ -142,7 +148,13 @@
   (check (either= eqv? (left #t #f) (left #t #f))   => #t)
   (check (either= eqv? (left #t #f) (left #t 'z))   => #f)
   (check (either= eqv? (left #t #f) (left #t))      => #f)
-  (check (either= eqv? (left #t #f) (right #t #f))  => #f))
+  (check (either= eqv? (left #t #f) (right #t #f))  => #f)
+
+  (check (either= eqv? (right #t) (right #t) (right #t))          => #t)
+  (check (either= eqv? (left #t) (left #t) (left #t))             => #t)
+  (check (either= eqv? (right #t) (right #t) (left #t))           => #f)
+  (check (either= eqv? (right #t) (right #t) (right #f))          => #f)
+  (check (either= eqv? (right #t 'z) (right #t 'z) (right #t 'z)) => #t))
 
 ;;;; Accessors
 
