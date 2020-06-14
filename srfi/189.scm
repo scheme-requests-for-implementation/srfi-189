@@ -126,12 +126,20 @@
     (assume (procedure? failure))
     (assume (procedure? success))
     (if (just? maybe)
-        (apply success (just-objs maybe))
+        (let ((objs (just-objs maybe)))
+          (if (singleton? objs)
+              (success (car objs))
+              (apply success objs)))
         (failure)))))
 
 (define (maybe-ref/default maybe . defaults)
   (assume (maybe? maybe))
-  (apply values (if (just? maybe) (just-objs maybe) defaults)))
+  (if (just? maybe)
+      (let ((objs (just-objs maybe)))
+        (if (singleton? objs) (car objs) (apply values objs)))
+      (if (singleton? defaults)
+          (car defaults)
+          (apply values defaults))))
 
 (define either-ref
   (case-lambda
@@ -141,12 +149,23 @@
     (assume (procedure? failure))
     (assume (procedure? success))
     (if (right? either)
-        (apply success (right-objs either))
-        (apply failure (left-objs either))))))
+        (let ((objs (right-objs either)))
+          (if (singleton? objs)
+              (success (car objs))
+              (apply success objs)))
+        (let ((objs (left-objs either)))
+          (if (singleton? objs)
+              (failure (car objs))
+              (apply failure objs)))))))
 
 (define (either-ref/default either . defaults)
   (assume (either? either))
-  (apply values (if (right? either) (right-objs either) defaults)))
+  (if (right? either)
+      (let ((objs (right-objs either)))
+        (if (singleton? objs) (car objs) (apply values objs)))
+      (if (singleton? defaults)
+          (car defaults)
+          (apply values defaults))))
 
 ;;;; Join and bind
 
