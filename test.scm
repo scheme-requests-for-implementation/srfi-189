@@ -369,12 +369,12 @@
   (check (maybe->values (just #t))                => #t)
   (check (values~>list (maybe->values (nothing))) => '())
 
-  (check (values~>list (maybe->lisp-values (nothing)))        => '(#f #f))
-  (check (values~>list (maybe->lisp-values (just #t)))        => '(#t #t))
-  (check (catch-exceptions (maybe->lisp-values (just #t #t))) => 'exception)
+  (check (values~>list (maybe->two-values (nothing)))        => '(#f #f))
+  (check (values~>list (maybe->two-values (just #t)))        => '(#t #t))
+  (check (catch-exceptions (maybe->two-values (just #t #t))) => 'exception)
 
-  (check (just-of-z? (lisp-values->maybe (lambda () (values 'z #t)))) => #t)
-  (check (nothing? (lisp-values->maybe (lambda () (values 'z #f))))   => #t)
+  (check (just-of-z? (two-values->maybe (lambda () (values 'z #t)))) => #t)
+  (check (nothing? (two-values->maybe (lambda () (values 'z #f))))   => #t)
 
   (check (nothing? (values->maybe (lambda () (values)))) => #t)
   (check (just-of-z? (values->maybe (lambda () 'z)))     => #t)

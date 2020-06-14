@@ -331,16 +331,6 @@
 (define (maybe->values maybe)
   (maybe-ref maybe values values))
 
-;; If `maybe' is a Just whose payload is a single value, return that
-;; value and #t.  Otherwise, return two false values.
-(define (maybe->lisp-values maybe)
-  (maybe-ref maybe
-             (lambda () (values #f #f))
-             (lambda objs
-               (ensure-singleton objs
-                                 "maybe->lisp-values: invalid payload")
-               (values (car objs) #t))))
-
 (define (values->maybe producer)
   (assume (procedure? producer))
   (call-with-values
@@ -348,13 +338,25 @@
    (lambda objs
      (if (null? objs) nothing-obj (raw-just objs)))))
 
-(define (lisp-values->maybe producer)
+;;; The following procedures interface between the Maybe protocol and
+;;; the two-values protocol, which returns |#f, #f| to represent
+;;; failure and |<any object>, #t| to represent success.
+
+(define (maybe->two-values maybe)
+  (maybe-ref maybe
+             (lambda () (values #f #f))
+             (lambda objs
+               (ensure-singleton objs
+                                 "maybe->two-values: invalid payload")
+               (values (car objs) #t))))
+
+(define (two-values->maybe producer)
   (call-with-values
    producer
    (case-lambda
      ((obj success)
       (if success (just obj) nothing-obj))
-     (vals (error "lisp-values->maybe: wrong number of values" vals)))))
+     (vals (error "two-values->maybe: wrong number of values" vals)))))
 
 (define (either->values either)
   (either-ref either (const (values)) values))
