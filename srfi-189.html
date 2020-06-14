@@ -26,6 +26,7 @@
   <li>Draft #3 published: 2020-04-20</li>
   <li>Draft #4 published: 2020-05-12</li>
   <li>Draft #5 published: 2020-06-02</li>
+  <li>Draft #6 published: 2020-06-05</li>
 </ul>
 
 <h2 id="abstract">Abstract</h2>
@@ -47,7 +48,7 @@ interpreted as &quot;returns no values&quot;.</p>
 to return their value on success and <code>#f</code> on failure.  However, if
 the procedure is able to return any value on success, there is no
 way to distinguish between a successful return of <code>#f</code> and failure.
-For example, the SRFI 1 procedure <code>find</code> returns <code>#f</code>code>
+For example, the SRFI 1 procedure <code>find</code> returns <code>#f</code>
 when it fails, but that makes using
 it to search for <code>#f</code> in a list impossible.
 What is more, it is easy for the programmer to write code in which
@@ -94,7 +95,7 @@ payload.</p>
 <p><em>failure</em>: A procedure that accepts zero arguments (unless specified otherwise).</p>
 <p><em>success</em>: A procedure that accepts one or more arguments.</p>
 <p><em>pred</em>: A predicate that accepts zero or more arguments.</p>
-<p><em>equal</em>: An predicate that accepts two arguments
+<p><em>equal</em>: A predicate that accepts two arguments
 and returns a boolean value.  It is not necessarily an equivalence relation.</p>
 <p><em>proc</em>: A procedure that accepts zero or more arguments and returns
 zero or more values.</p>
@@ -402,7 +403,7 @@ and can handle an argument that is either an actual pair or Just a pair.
 (define (head x)
   (cond
     ((pair? x) (just (car x)))
-    ((and (right? x) (pair? (maybe-ref x))) (just (car (maybe-ref x))))
+    ((and (just? x) (pair? (maybe-ref x))) (just (car (maybe-ref x))))
     (else (nothing))))
 </pre>
 <p>In other words, if the argument to <code>head</code> is a pair,
