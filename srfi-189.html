@@ -239,38 +239,38 @@ a list rather than multiple arguments.
 There is no need for <code>list-&gt;nothing</code> distinct
 from <code>nothing</code>.</p>
 <p><em>The following procedures interface between the Maybe protocol
-and a protocol that uses a non-empty list of values for success
-and an empty list for failure.</em></p>
+and the list protocol, which uses an empty list to represent failure
+and a non-empty list to represent success.</em></p>
 <p><code>(maybe-&gt;list</code> <em>maybe</em><code>)</code><br>
 <code>(either-&gt;list</code> <em>either</em><code>)</code></p>
 <p>Returns a list whose elements are the payload of <em>maybe/either</em>;
 if <em>maybe</em> is Nothing, returns the empty list.
 It is an error to mutate the result of this procedure.</p>
 <p><em>The following procedures interface between the Maybe protocol and
-the frequently used Lisp and Scheme protocol that uses <code>#f</code> to represent failure
+the truth protocol, which uses <code>#f</code> to represent failure
 and a single true value to represent success.</em></p>
-<p><code>(maybe-&gt;lisp</code> <em>maybe</em><code>)</code></p>
+<p><code>(maybe-&gt;truth</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns its payload; otherwise returns <code>#f</code>.
 It is an error if a Just does not have exactly one value.</p>
-<p><code>(lisp-&gt;maybe</code> <em>obj</em><code>)</code></p>
+<p><code>(truth-&gt;maybe</code> <em>obj</em><code>)</code></p>
 <p>If <em>obj</em> is <code>#f</code>, return Nothing; otherwise, return a Just whose
 payload is <em>obj</em>.
 <p><em>The following procedures interface between the Maybe protocol
-and the protocol used by generators, which return an end-of-file object
-to signal termination and any other object as a generated value.</em></p>
-<p><code>(maybe-&gt;eof</code> <em>maybe</em><code>)</code></p>
+and the generator protocol, which uses an end-of-file object
+to represent failure and any other value to represent success.</em></p>
+<p><code>(maybe-&gt;generator</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, then its payload is returned.
 It is an error if a Just does not have exactly one value.
 If <em>maybe</em> is Nothing, then an end-of-file object is returned.
 This wraps a <a href="http://srfi.schemers.org/srfi-158/srfi-158.html">
 SRFI 158</a> accumulator to accept Maybes.
-<p><code>(eof-&gt;maybe</code> <em>obj</em><code>)</code></p>
+<p><code>(generator-&gt;maybe</code> <em>obj</em><code>)</code></p>
 If <em>obj</em> is an end-of-file object, return Nothing.
 Otherwise, return <em>obj</em> wrapped in a Just.
 This wraps a SRFI 158 generator to produce Maybes.
 <p><em>The following procedures interface between the Maybe and Either protocols
-and a protocol that returns multiple values (often a fixed number of them)
-on success and no values on failure.</em></p>
+and the values protocol, which returns one or more values to represent success
+and zero values to represent failure.</em></p>
 <p><code>(maybe-&gt;values</code> <em>maybe</em><code>)</code><br>
 <code>(either-&gt;values</code> <em>either</em><code>)</code></p>
 <p>If <em>maybe/either</em> is a Just/Right, returns the values of its payload;
@@ -284,18 +284,18 @@ They invoke <em>producer</em> with no arguments.
 If no values are returned, Nothing / Left of <em>objs</em> is returned.
 Otherwise the values are wrapped in a Just/Right and returned.</p>
 <p><em>The following procedures interface between the Maybe protocol
-and a protocol that returns two values.  On success the first value
-is the intended result and the second value is <code>#t</code>;
-on failure, both values are <code>#f</code>.  This protocol is
-more often used in Common Lisp, where additional values are
+and the two-values protocol, which returns
+<code>#f</code> and <code>#f</code> to represent failure and
+any object and <code>#t</code> to represent success.
+(This protocol is more often used in Common Lisp, where additional values are
 automatically discarded if the continuation expects only one.)</em></p>
-<p><code>(maybe-&gt;lisp-values</code> <em>maybe</em><code>)</code></p>
+<p><code>(maybe-&gt;two-values</code> <em>maybe</em><code>)</code></p>
 <p>If <em>maybe</em> is a Just, returns the value of its payload and
 the additional value <code>#t</code>;
 otherwise returns two values, both <code>#f</code>.
 It is an error if <em>maybe</em> does not have exactly one value.
-<p><code>(lisp-values-&gt;maybe</code> <em>producer</em><code>)</code></p>
-<p>This procedure is the inverse of <code>maybe-&gt;lisp-values</code>.
+<p><code>(two-values-&gt;maybe</code> <em>producer</em><code>)</code></p>
+<p>This procedure is the inverse of <code>maybe-&gt;two-values</code>.
 It invokes <em>producer</em> with no arguments.
 If the second value is true, the first value
 is wrapped in a Just and returned;
