@@ -238,13 +238,19 @@
   (assume (procedure? pred))
   (maybe-bind maybe
               (lambda objs
-                (if (apply pred objs) maybe nothing-obj))))
+                (let ((res (if (singleton? objs)
+                               (pred (car objs))  ; fast path
+                               (apply pred objs))))
+                  (if res maybe nothing-obj)))))
 
 (define (maybe-remove pred maybe)
   (assume (procedure? pred))
   (maybe-bind maybe
               (lambda objs
-                (if (apply pred objs) nothing-obj maybe))))
+                (let ((res (if (singleton? objs)
+                               (pred (car objs))  ; fast path
+                               (apply pred objs))))
+                  (if res nothing-obj maybe)))))
 
 ;; Traverse a `container' of Maybes with `cmap', collect the payload
 ;; objects with `aggregator', and wrap the new collection in a Just.
@@ -271,7 +277,10 @@
   (either-ref either
               (const (raw-left default-objs))
               (lambda objs
-                (if (apply pred objs) either (raw-left default-objs)))))
+                (let ((res (if (singleton? objs)
+                               (pred (car objs))  ; fast path
+                               (apply pred objs))))
+                (if res either (raw-left default-objs))))))
 
 (define (either-remove pred either . default-objs)
   (assume (procedure? pred))
@@ -279,7 +288,10 @@
   (either-ref either
               (const (raw-left default-objs))
               (lambda objs
-                (if (apply pred objs) (raw-left default-objs) either))))
+                (let ((res (if (singleton? objs)
+                               (pred (car objs))  ; fast path
+                               (apply pred objs))))
+                (if res (raw-left default-objs) either)))))
 
 ;; Traverse a `container' of Eithers with `cmap', collect the payload
 ;; objects with `aggregator', and wrap the new collection in a Right.
