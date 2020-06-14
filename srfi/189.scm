@@ -304,26 +304,28 @@
   ((if (right? either) right-objs left-objs) either))
 
 ;; If `maybe' is a Just, return its payload; otherwise, return false.
-(define (maybe->lisp maybe)
+(define (maybe->truth maybe)
   (maybe-ref maybe
              (lambda () #f)
              (lambda objs
                (ensure-singleton objs "maybe->lisp: invalid payload")
                (car objs))))
 
-(define (lisp->maybe obj)
+(define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
 
-;; If `maybe' is a Just whose payload is a single value, return that
-;; value.  Otherwise, return EOF.
-(define (maybe->eof maybe)
+;;; The following procedures interface between the Maybe protocol and
+;;; the generator protocol, which uses an EOF object to represent failure
+;;; and any other value to represent success.
+
+(define (maybe->generator maybe)
   (maybe-ref maybe
              (lambda () (eof-object))
              (lambda objs
-               (ensure-singleton objs "maybe->eof: invalid payload")
+               (ensure-singleton objs "maybe->generator: invalid payload")
                (car objs))))
 
-(define (eof->maybe obj)
+(define (generator->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
 
 (define (maybe->values maybe)

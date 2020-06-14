@@ -353,19 +353,17 @@
   (check (either->list (right #t #t)) => '(#t #t))
   (check (either->list (left #t #t))  => '(#t #t))
 
-  ;; maybe->lisp and lisp->maybe
-  (check (maybe->lisp (nothing))                       => #f)
-  (check (maybe->lisp (just #t))                       => #t)
-  (check (catch-exceptions (maybe->lisp (just #t #t))) => 'exception)
-  (check (nothing? (lisp->maybe #f))                   => #t)
-  (check (just-of-z? (lisp->maybe 'z))                 => #t)
+  (check (maybe->truth (nothing))                       => #f)
+  (check (maybe->truth (just #t))                       => #t)
+  (check (catch-exceptions (maybe->truth (just #t #t))) => 'exception)
+  (check (nothing? (truth->maybe #f))                   => #t)
+  (check (just-of-z? (truth->maybe 'z))                 => #t)
 
-  ;; maybe->eof and eof->maybe
-  (check (eof-object? (maybe->eof (nothing)))         => #t)
-  (check (maybe->eof (just #t))                       => #t)
-  (check (catch-exceptions (maybe->eof (just #t #t))) => 'exception)
-  (check (nothing? (eof->maybe (eof-object)))         => #t)
-  (check (just-of-z? (eof->maybe 'z))                 => #t)
+  (check (eof-object? (maybe->generator (nothing)))         => #t)
+  (check (maybe->generator (just #t))                       => #t)
+  (check (catch-exceptions (maybe->generator (just #t #t))) => 'exception)
+  (check (nothing? (generator->maybe (eof-object)))         => #t)
+  (check (just-of-z? (generator->maybe 'z))                 => #t)
 
   ;; maybe->values and friends
   (check (maybe->values (just #t))                => #t)

@@ -44,9 +44,10 @@
           maybe-sequence either-sequence
 
           maybe->either either->maybe list->just list->right maybe->list
-          either->list maybe->lisp lisp->maybe maybe->values maybe->lisp-values
-          values->maybe either->values values values->either lisp-values->maybe
-          maybe-for-each either-for-each maybe->eof eof->maybe list->left
+          either->list maybe->truth truth->maybe maybe->values
+          maybe->lisp-values values->maybe either->values values values->either
+          lisp-values->maybe maybe-for-each either-for-each maybe->generator
+          generator->maybe list->left
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
           either-unfold
