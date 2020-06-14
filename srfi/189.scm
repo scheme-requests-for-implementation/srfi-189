@@ -82,16 +82,21 @@
 (define (nothing? obj)
   (eqv? obj nothing-obj))
 
-;; True if maybe1 and maybe2 are both Nothing, or if both are Justs
-;; whose payloads are equal in the sense of equal.
-(define (maybe= equal maybe1 maybe2)
+;; True if all maybes are Nothing, or if all are Justs whose payloads
+;; are equal in the sense of equal.
+(define (maybe= equal . maybes)
   (assume (procedure? equal))
-  (assume (maybe? maybe1))
-  (assume (maybe? maybe2))
-  (cond ((and (nothing? maybe1) (nothing? maybe2)) #t)
-        ((and (just? maybe1) (just? maybe2))
-         (list= equal (just-objs maybe1) (just-objs maybe2)))
-        (else #f)))
+  (assume (pair? maybes))
+  (let lp ((maybe (car maybes)) (rest (cdr maybes)))
+    (or (null? rest)
+        (and (%maybe=2 equal maybe (car rest))
+             (lp maybe (cdr rest))))))
+
+(define (%maybe=2 equal maybe1 maybe2)
+  (or (eqv? maybe1 maybe2)  ; Also handles the Nothing = Nothing case.
+      (and (just? maybe1)
+           (just? maybe2)
+           (list= equal (just-objs maybe1) (just-objs maybe2)))))
 
 (define (either? obj)
   (or (left? obj) (right? obj)))
@@ -100,16 +105,21 @@
   (assume (either? either))
   (either-ref either right left))
 
-;; True if either1 and either2 are both Lefts or both Rights and their
-;; payloads are equal in the sense of equal.
-(define (either= equal either1 either2)
+;; True if all eithers are all Lefts or all Rights and their payloads
+;; are equal in the sense of equal.
+(define (either= equal . eithers)
   (assume (procedure? equal))
-  (assume (either? either1))
-  (assume (either? either2))
+  (assume (pair? eithers))
+  (let lp ((either (car eithers)) (rest (cdr eithers)))
+    (or (null? rest)
+        (and (%either=2 equal either (car rest))
+             (lp either (cdr rest))))))
+
+(define (%either=2 equal either1 either2)
   (let ((e= (lambda (acc) (list= equal (acc either1) (acc either2)))))
-    (cond ((and (left? either1) (left? either2)) (e= left-objs))
-          ((and (right? either1) (right? either2)) (e= right-objs))
-          (else #f))))
+    (or (eqv? either1 either2)
+        (and (left? either1) (left? either2) (e= left-objs))
+        (and (right? either1) (right? either2) (e= right-objs)))))
 
 ;;;; Accessors
 
