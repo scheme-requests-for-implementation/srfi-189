@@ -197,7 +197,7 @@ of the container and not on the number of objects it contains.</p>
 <code>(either-filter</code> <em>pred either obj</em> ...<code>)</code><br>
 <code>(either-remove</code> <em>pred either obj</em> ...<code>)</code></p>
 <p>If <em>maybe/either</em> is a Just/Right and the values of its payload
-satisfy / does not satisfy <em>pred</em>, then
+satisfy / do not satisfy <em>pred</em>, then
 return <em>maybe</em>; otherwise, returns Nothing / a Left of <em>objs</em>.</p>
 <p><code>(maybe-sequence</code> <em>mappable map [aggregator]</em><code>)</code><br>
 <code>(either-sequence</code> <em>mappable map [aggregator]</em><code>)</code></p>
@@ -340,25 +340,6 @@ It invokes <em>producer</em> with no arguments.
 If the second value is true, the first value
 is wrapped in a Just and returned;
 otherwise, Nothing is returned.</p>
-<p>&#9758; The following procedure interfaces between the Either protocol
-and the <em>exception</em> protocol, which raises
-an exception satisfying a particular predicate to represent failure and
-returns values to represent success.</p>
-<p><code>(exception-&gt;either</code> <em>producer predicate</em><code>)</code></p>
-This procedure invokes <em>producer</em> with no arguments
-within the scope of an exception handler.
-If the exception handler is not invoked,
-the values returned by <em>producer</em> are wrapped in a Left
-and returned.
-If the exception handler is invoked and the condition object passed to it
-satisfies <em>predicate</em>, then <code>left</code> is invoked on the
-condition object with the same continuation and dynamic environment
-as <code>either-&gt;exception</code>.
-However, if the exception handler is invoked and the condition object passed to it
-does not satisfy <em>predicate</em>, then <code>raise-continuable</code> is invoked on the
-condition object with the continuation and dynamic environment of the procedure
-that raised the exception, except that the exception handler is temporarily removed
-from the handler stack.</p>
 <h3 id="map-fold-and-unfold">Map, fold and unfold</h3>
 <p><code>(maybe-map</code> <em>proc maybe</em><code>)</code><br>
 <code>(either-map</code> <em>proc either</em><code>)</code></p>
