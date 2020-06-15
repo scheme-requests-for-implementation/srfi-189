@@ -49,12 +49,27 @@
   (syntax-rules ()
     ((_ obj) (lambda _ obj))))
 
-(define (singleton? xs)
-  (and (pair? xs) (null? (cdr xs))))
+(define (singleton? lis)
+  (and (pair? lis) (null? (cdr lis))))
 
 (define (ensure-singleton lis msg)
   (unless (singleton? lis)
     (error msg lis)))
+
+;; Calls proc on the car of args if args is a singleton.  Otherwise,
+;; calls proc with the elements of args as its arguments.
+;; Both proc and args should be identifiers.
+(define-syntax fast-apply
+  (syntax-rules ()
+    ((_ proc args)
+     (if (singleton? args) (proc (car args)) (apply proc args)))))
+
+;; Return the elements of vals as values, with singleton fast path.
+;; vals should be an identifier.
+(define-syntax fast-list->values
+  (syntax-rules ()
+    ((_ vals)
+     (if (singleton? vals) (car vals) (apply values vals)))))
 
 (define unspecified (if #f #f))
 
@@ -94,7 +109,7 @@
 
 (define (either? obj)
   (or (left? obj) (right? obj)))
-
+
 (define (either-swap either)
   (assume (either? either))
   (either-ref either right left))
@@ -113,7 +128,7 @@
     (or (eqv? either1 either2)
         (and (left? either1) (left? either2) (e= left-objs))
         (and (right? either1) (right? either2) (e= right-objs)))))
-
+
 ;;;; Accessors
 
 (define (maybe-ref maybe failure . %opt-args)
@@ -122,23 +137,19 @@
   (if (just? maybe)
       (let ((objs (just-objs maybe))
             (success (if (pair? %opt-args) (car %opt-args) values)))
-        (if (singleton? objs)
-            (success (car objs))
-            (apply success objs)))
+        (fast-apply success objs))
       (failure)))
 
 (define (maybe-ref/default maybe . defaults)
   (assume (maybe? maybe))
   (if (just? maybe)
       (let ((objs (just-objs maybe)))
-        (if (singleton? objs) (car objs) (apply values objs)))
-      (if (singleton? defaults)
-          (car defaults)
-          (apply values defaults))))
+        (fast-list->values objs))
+      (fast-list->values defaults)))
 
 (define (%either-ref-single either accessor cont)
   (let ((objs (accessor either)))
-    (if (singleton? objs) (cont (car objs)) (apply cont objs))))
+    (fast-apply cont objs)))
 
 (define (either-ref either failure . %opt-args)
   (assume (either? either))
@@ -153,10 +164,8 @@
   (assume (either? either))
   (if (right? either)
       (let ((objs (right-objs either)))
-        (if (singleton? objs) (car objs) (apply values objs)))
-      (if (singleton? defaults)
-          (car defaults)
-          (apply values defaults))))
+        (fast-list->values objs))
+      (fast-list->values defaults)))
 
 ;;;; Join and bind
 
@@ -188,7 +197,7 @@
   (lambda args
     (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
       (if (null? rest)
-          (apply mproc args)  ; fast path
+          (fast-apply mproc args)
           (maybe-ref (apply mproc args)
                      nothing
                      (lambda objs
@@ -222,7 +231,7 @@
   (lambda args
     (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
       (if (null? rest)
-          (apply mproc args)  ; fast path
+          (fast-apply mproc args)
           (either-ref (apply mproc args)
                       left
                       (lambda objs
@@ -238,18 +247,14 @@
   (assume (procedure? pred))
   (maybe-bind maybe
               (lambda objs
-                (let ((res (if (singleton? objs)
-                               (pred (car objs))  ; fast path
-                               (apply pred objs))))
+                (let ((res (fast-apply pred objs)))
                   (if res maybe nothing-obj)))))
 
 (define (maybe-remove pred maybe)
   (assume (procedure? pred))
   (maybe-bind maybe
               (lambda objs
-                (let ((res (if (singleton? objs)
-                               (pred (car objs))  ; fast path
-                               (apply pred objs))))
+                (let ((res (fast-apply pred objs)))
                   (if res nothing-obj maybe)))))
 
 ;; Traverse a container of Maybes with cmap, collect the payload
@@ -278,10 +283,8 @@
   (either-ref either
               (const (raw-left default-objs))
               (lambda objs
-                (let ((res (if (singleton? objs)
-                               (pred (car objs))  ; fast path
-                               (apply pred objs))))
-                (if res either (raw-left default-objs))))))
+                (let ((res (fast-apply pred objs)))
+                  (if res either (raw-left default-objs))))))
 
 (define (either-remove pred either . default-objs)
   (assume (procedure? pred))
@@ -289,10 +292,8 @@
   (either-ref either
               (const (raw-left default-objs))
               (lambda objs
-                (let ((res (if (singleton? objs)
-                               (pred (car objs))  ; fast path
-                               (apply pred objs))))
-                (if res (raw-left default-objs) either)))))
+                (let ((res (fast-apply pred objs)))
+                  (if res (raw-left default-objs) either)))))
 
 ;; Traverse a container of Eithers with cmap, collect the payload
 ;; objects with aggregator, and wrap the new collection in a Right.
