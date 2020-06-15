@@ -72,7 +72,7 @@
      (guard (_ (else 'exception)) expr))))
 
 ;; Gives the values of expr as a list.
-(define-syntax values~>list
+(define-syntax values->list
   (syntax-rules ()
     ((_ expr)
      (call-with-values (lambda () expr) list))))
@@ -165,7 +165,7 @@
   (check (maybe-ref (just #t) (lambda () #f) values) => #t)
   (check (maybe-ref (nothing) (lambda () #f) values) => #f)
 
-  (check (values~>list (maybe-ref (just #t #f) (lambda () #f))) => '(#t #f))
+  (check (values->list (maybe-ref (just #t #f) (lambda () #f))) => '(#t #f))
   (check (maybe-ref (just #t #f) (lambda () #f) list)           => '(#t #f))
 
   (check (either-ref (left #t) (constantly #f))         => #f)
@@ -177,14 +177,14 @@
 
   (check (maybe-ref/default (just #t) #f) => #t)
   (check (maybe-ref/default (nothing) #f) => #f)
-  (check (values~>list (maybe-ref/default (just #t #t) #f #f)) => '(#t #t))
-  (check (values~>list (maybe-ref/default (nothing) #f #f))    => '(#f #f))
+  (check (values->list (maybe-ref/default (just #t #t) #f #f)) => '(#t #t))
+  (check (values->list (maybe-ref/default (nothing) #f #f))    => '(#f #f))
 
   (check (either-ref/default (right #t) #f) => #t)
   (check (either-ref/default (left #t) #f)  => #f)
-  (check (values~>list (either-ref/default (right #t #t) #f #f))
+  (check (values->list (either-ref/default (right #t #t) #f #f))
     => '(#t #t))
-  (check (values~>list (either-ref/default (left #t) #f #f))
+  (check (values->list (either-ref/default (left #t) #f #f))
     => '(#f #f)))
 
 ;;;; Join and bind
@@ -379,10 +379,10 @@
 
   ;; maybe->values and friends
   (check (maybe->values (just #t))                => #t)
-  (check (values~>list (maybe->values (nothing))) => '())
+  (check (values->list (maybe->values (nothing))) => '())
 
-  (check (values~>list (maybe->two-values (nothing)))        => '(#f #f))
-  (check (values~>list (maybe->two-values (just #t)))        => '(#t #t))
+  (check (values->list (maybe->two-values (nothing)))        => '(#f #f))
+  (check (values->list (maybe->two-values (just #t)))        => '(#t #t))
   (check (catch-exceptions (maybe->two-values (just #t #t))) => 'exception)
 
   (check (just-of-z? (two-values->maybe (lambda () (values 'z #t)))) => #t)
@@ -397,7 +397,7 @@
 
   ;; either->values and friends
   (check (either->values (right #t)) => #t)
-  (check (values~>list (either->values (left 'z))) => '())
+  (check (values->list (either->values (left 'z))) => '())
 
   (check (left-of-z? (values->either (lambda () (values)) 'z)) => #t)
   (check (right-of-z? (values->either (lambda () 'z) #f))      => #t)
