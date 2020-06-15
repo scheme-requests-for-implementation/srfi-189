@@ -97,7 +97,7 @@
 (define (maybe= equal . maybes)
   (assume (procedure? equal))
   (assume (pair? maybes))
-  (let lp ((maybe1 (car maybes)))
+  (let ((maybe1 (car maybes)))
     (every (lambda (maybe2) (%maybe=2 equal maybe1 maybe2))
            (cdr maybes))))
 
