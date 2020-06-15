@@ -252,9 +252,10 @@
                                (apply pred objs))))
                   (if res nothing-obj maybe)))))
 
-;; Traverse a `container' of Maybes with `cmap', collect the payload
-;; objects with `aggregator', and wrap the new collection in a Just.
-;; If a Nothing is encountered while traversing, return it immediately.
+;; Traverse a container of Maybes with cmap, collect the payload
+;; objects with aggregator, and wrap the new collection in a Just.
+;; If a Nothing is encountered while traversing, return it
+;; immediately.
 (define maybe-sequence
   (case-lambda
    ((container cmap) (maybe-sequence container cmap list))
@@ -292,9 +293,9 @@
                                (pred (car objs))  ; fast path
                                (apply pred objs))))
                 (if res (raw-left default-objs) either)))))
-
-;; Traverse a `container' of Eithers with `cmap', collect the payload
-;; objects with `aggregator', and wrap the new collection in a Right.
+
+;; Traverse a container of Eithers with cmap, collect the payload
+;; objects with aggregator, and wrap the new collection in a Right.
 ;; If a Left is encountered while traversing, return it immediately.
 (define either-sequence
   (case-lambda
@@ -307,7 +308,7 @@
        (right (cmap (lambda (e)
                       (either-ref e (const (return e)) aggregator))
                     container)))))))
-
+
 ;;;; Conversion
 
 (define (maybe->either maybe . default-objs)
@@ -336,7 +337,7 @@
   (assume (either? either))
   ((if (right? either) right-objs left-objs) either))
 
-;; If `maybe' is a Just, return its payload; otherwise, return false.
+;; If maybe is a Just, return its payload; otherwise, return false.
 (define (maybe->truth maybe)
   (maybe-ref maybe
              (lambda () #f)
@@ -346,7 +347,7 @@
 
 (define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
-
+
 ;;; The following procedures interface between the Maybe protocol and
 ;;; the generator protocol, which uses an EOF object to represent failure
 ;;; and any other value to represent success.
@@ -360,7 +361,7 @@
 
 (define (generator->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
-
+
 (define (maybe->values maybe)
   (maybe-ref maybe values values))
 
@@ -421,7 +422,7 @@
              (lambda objs  ; apply kons to all payload values plus nil
                (apply kons (append objs (list nil))))))
 
-;; The unused `successor' argument is for consistency only and may
+;; The unused successor argument is for consistency only and may
 ;; be anything.
 (define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
@@ -452,7 +453,7 @@
               (lambda objs  ; apply kons to all payload values plus nil
                 (apply kons (append objs (list nil))))))
 
-;; The unused `successor' argument is for consistency only and may
+;; The unused successor argument is for consistency only and may
 ;; be anything.
 (define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
