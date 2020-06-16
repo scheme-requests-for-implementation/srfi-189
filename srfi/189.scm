@@ -431,7 +431,7 @@
   (if (singleton? seeds)
       (if (stop? (car seeds))  ; fast path
           nothing-obj
-          (just (mapper (car seeds))))
+          (call-with-values (lambda () (mapper (car seeds))) just))
       (if (apply stop? seeds)
           nothing-obj
           (call-with-values (lambda () (apply mapper seeds)) just))))
@@ -462,7 +462,7 @@
   (if (singleton? seeds)
       (if (stop? (car seeds))  ; fast path
           (raw-left seeds)
-          (right (mapper (car seeds))))
+          (call-with-values (lambda () (apply mapper seeds)) right))
       (if (apply stop? seeds)
           (raw-left seeds)
           (call-with-values (lambda () (apply mapper seeds)) right))))

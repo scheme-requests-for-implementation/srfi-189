@@ -462,7 +462,10 @@
   (check (maybe= eqv? (just #t 'z)
                       (maybe-unfold never values #f #t 'z))
     => #t)
-
+  (check (maybe= eqv? (just #t 'z)
+                      (maybe-unfold never (constantly (values #t 'z)) #f))
+    => #t)
+
   (check (left-of-z? (either-unfold always not #f 'z))             => #t)
   (check (either= eqv? (right #t) (either-unfold never not #f #f)) => #t)
   (check (either= eqv? (right #t 'z)
@@ -470,8 +473,11 @@
     => #t)
   (check (either= eqv? (left #t 'z)
                        (either-unfold always values #f #t 'z))
+    => #t)
+  (check (either= eqv? (right #t 'z)
+                       (either-unfold never (constantly (values #t 'z)) #f))
     => #t))
-
+
 ;;;; Conditional syntax
 
 (define (check-syntax)
