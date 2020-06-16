@@ -346,8 +346,18 @@
                (ensure-singleton objs "maybe->lisp: invalid payload")
                (car objs))))
 
+;; If either is a Right, return its payload; otherwise, return false.
+(define (either->truth either)
+  (either-ref either
+              (const #f)
+              (lambda objs
+                (ensure-singleton objs "either->truth: invalid payload")
+                (car objs))))
+
 (define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
+
+;;; TODO: truth->either, once we clarify the value of (truth->either #f).
 
 ;;; The following procedures interface between the Maybe protocol and
 ;;; the generator protocol, which uses an EOF object to represent failure

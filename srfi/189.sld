@@ -44,7 +44,7 @@
           maybe-sequence either-sequence
 
           maybe->either either->maybe list->just list->right maybe->list
-          either->list maybe->truth truth->maybe maybe->values
+          either->list maybe->truth either->truth truth->maybe maybe->values
           maybe->two-values values->maybe either->values values values->either
           two-values->maybe maybe-for-each either-for-each maybe->generator
           generator->maybe list->left
