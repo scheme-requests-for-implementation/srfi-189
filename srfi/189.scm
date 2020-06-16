@@ -343,7 +343,7 @@
   (maybe-ref maybe
              (lambda () #f)
              (lambda objs
-               (ensure-singleton objs "maybe->lisp: invalid payload")
+               (ensure-singleton objs "maybe->truth: invalid payload")
                (car objs))))
 
 ;; If either is a Right, return its payload; otherwise, return false.
