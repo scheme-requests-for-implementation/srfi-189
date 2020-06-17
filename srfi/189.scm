@@ -360,17 +360,17 @@
 ;;; TODO: truth->either, once we clarify the value of (truth->either #f).
 
 ;;; The following procedures interface between the Maybe protocol and
-;;; the generator protocol, which uses an EOF object to represent failure
-;;; and any other value to represent success.
+;;; the generation protocol, which uses an EOF object to represent
+;;; failure and any other value to represent success.
 
-(define (maybe->generator maybe)
+(define (maybe->generation maybe)
   (maybe-ref maybe
              (lambda () (eof-object))
              (lambda objs
-               (ensure-singleton objs "maybe->generator: invalid payload")
+               (ensure-singleton objs "maybe->generation: invalid payload")
                (car objs))))
 
-(define (generator->maybe obj)
+(define (generation->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
 
 (define (maybe->values maybe)
