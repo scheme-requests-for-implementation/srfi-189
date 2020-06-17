@@ -348,7 +348,7 @@
 (define (list->either lis . default-objs)
   (assume (or (null? lis) (pair? lis)))
   (if (null? lis) (raw-left default-objs) (raw-right lis)))
-
+
 ;; If maybe is a Just, return its payload; otherwise, return false.
 (define (maybe->truth maybe)
   (maybe-ref maybe
@@ -391,7 +391,6 @@
        (assume (or (null? list-or-false) (pair? list-or-false)))
        (raw-right list-or-false))
       (raw-left default-objs)))
-
 
 ;;; The following procedures interface between the Maybe protocol and
 ;;; the generation protocol, which uses an EOF object to represent
@@ -473,12 +472,19 @@
   (assume (procedure? stop?))
   (assume (procedure? mapper))
   (if (singleton? seeds)
-      (if (stop? (car seeds))  ; fast path
-          nothing-obj
-          (call-with-values (lambda () (mapper (car seeds))) just))
+      (let ((seed (car seeds)))  ; fast path
+        (if (stop? seed)
+            nothing-obj
+            (begin
+             ;; successor might return multiple seeds.
+             (assume (call-with-values (lambda () (successor seed)) stop?))
+             (call-with-values (lambda () (mapper (car seeds))) just)))
       (if (apply stop? seeds)
           nothing-obj
-          (call-with-values (lambda () (apply mapper seeds)) just))))
+          (begin
+           (assume (call-with-values (lambda () (apply successor seeds))
+                                     stop?))
+           (call-with-values (lambda () (apply mapper seeds)) just)))))
 
 (define (either-map proc either)
   (assume (procedure? proc))
@@ -498,18 +504,23 @@
               (lambda objs  ; apply kons to all payload values plus nil
                 (apply kons (append objs (list nil))))))
 
-;; The unused successor argument is for consistency only and may
-;; be anything.
 (define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
   (if (singleton? seeds)
-      (if (stop? (car seeds))  ; fast path
-          (raw-left seeds)
-          (call-with-values (lambda () (apply mapper seeds)) right))
+      (let ((seed (car seeds)))  ; fast path
+        (if (stop? seed)
+            (raw-left seeds)
+            (begin
+             ;; successor might return multiple values.
+             (assume (call-with-values (lambda () (successor seed)) stop?))
+             (call-with-values (lambda () (apply mapper seeds)) right))))
       (if (apply stop? seeds)
           (raw-left seeds)
-          (call-with-values (lambda () (apply mapper seeds)) right))))
+          (begin
+           (assume (call-with-values (lambda () (apply successor seeds))
+                                     stop?))
+           (call-with-values (lambda () (apply mapper seeds)) right)))))
 
 ;;;; Conditional syntax
 
