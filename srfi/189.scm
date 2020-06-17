@@ -330,6 +330,8 @@
   (assume (or (null? lis) (pair? lis)))
   (raw-left lis))
 
+;;;; Protocol conversion
+
 (define (maybe->list maybe)
   (assume (maybe? maybe))
   (if (nothing? maybe) '() (just-objs maybe)))
@@ -337,6 +339,15 @@
 (define (either->list either)
   (assume (either? either))
   ((if (right? either) right-objs left-objs) either))
+
+(define (list->maybe lis)
+  (assume (or (null? lis) (pair? lis)))
+  (if (null? lis) nothing-obj (raw-just lis)))
+
+;; FIXME: Clarify arguments.
+(define (list->either lis . default-objs)
+  (assume (or (null? lis) (pair? lis)))
+  (if (null? lis) (raw-left default-objs) (raw-right lis)))
 
 ;; If maybe is a Just, return its payload; otherwise, return false.
 (define (maybe->truth maybe)
