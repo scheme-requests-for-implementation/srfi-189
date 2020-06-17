@@ -369,6 +369,29 @@
   (if obj (just obj) nothing-obj))
 
 ;;; TODO: truth->either, once we clarify the value of (truth->either #f).
+
+(define (maybe->list-truth maybe)
+  (assume (maybe? maybe))
+  (if (just? maybe) (just-objs maybe) #f))
+
+(define (either->list-truth either)
+  (assume (either? either))
+  (if (right? either) (right-objs either) #f))
+
+(define (list-truth->maybe list-or-false)
+  (if list-or-false
+      (begin
+       (assume (or (null? list-or-false) (pair? list-or-false)))
+       (raw-just list-or-false))
+      nothing-obj))
+
+(define (list-truth->either list-or-false . default-objs)
+  (if list-or-false
+      (begin
+       (assume (or (null? list-or-false) (pair? list-or-false)))
+       (raw-right list-or-false))
+      (raw-left default-objs)))
+
 
 ;;; The following procedures interface between the Maybe protocol and
 ;;; the generation protocol, which uses an EOF object to represent
