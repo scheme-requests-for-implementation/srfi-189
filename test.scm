@@ -65,12 +65,6 @@
   (syntax-rules ()
     ((_ obj) (lambda _ obj))))
 
-;; Gives the value of expr, or 'exception if an exception was raised.
-(define-syntax catch-exceptions
-  (syntax-rules ()
-    ((_ expr)
-     (guard (_ (else 'exception)) expr))))
-
 ;; Gives the values of expr as a list.
 (define-syntax values->list
   (syntax-rules ()
@@ -91,7 +85,7 @@
 ;; Verify that an Either is a Left of 'z, a dummy object.
 (define (left-of-z? e)
   (and (either? e) (either= eqv? e (left 'z))))
-
+
 ;;;; Tests
 
 (define (check-misc)
@@ -101,7 +95,7 @@
   ;; either-swap
   (check (either= eqv? (right #t #t) (either-swap (left #t #t))) => #t)
   (check (either= eqv? (left #t #t) (either-swap (right #t #t))) => #t))
-
+
 ;;;; Predicates
 
 (define (check-predicates)
@@ -196,17 +190,11 @@
   (check (just-of-z? (maybe-join (just (just 'z)))) => #t)
   (check (nothing? (maybe-join (just (nothing))))   => #t)
   (check (nothing? (maybe-join (nothing)))          => #t)
-  (check (catch-exceptions (maybe-join (just #t)))  => 'exception)
-  (check (catch-exceptions (maybe-join (just (just #t) (just #t))))
-    => 'exception)
 
   ;; either-join
   (check (right-of-z? (either-join (right (right 'z)))) => #t)
   (check (left-of-z? (either-join (right (left 'z))))   => #t)
   (check (left-of-z? (either-join (left 'z)))           => #t)
-  (check (catch-exceptions (either-join (right #t)))    => 'exception)
-  (check (catch-exceptions (either-join (right (right #t) (right #t))))
-    => 'exception)
 
   ;; maybe-bind
   (check (nothing? (maybe-bind (nothing) just)) => #t)
@@ -372,7 +360,6 @@
 
   (check (maybe->truth (nothing))                       => #f)
   (check (maybe->truth (just #t))                       => #t)
-  (check (catch-exceptions (maybe->truth (just #t #t))) => 'exception)
   (check (nothing? (truth->maybe #f))                   => #t)
   (check (just-of-z? (truth->maybe 'z))                 => #t)
 
@@ -388,17 +375,15 @@
 
   (check (eof-object? (maybe->generation (nothing)))         => #t)
   (check (maybe->generation (just #t))                       => #t)
-  (check (catch-exceptions (maybe->generation (just #t #t))) => 'exception)
   (check (nothing? (generation->maybe (eof-object)))         => #t)
   (check (just-of-z? (generation->maybe 'z))                 => #t)
-
+
   ;; maybe->values and friends
   (check (maybe->values (just #t))                => #t)
   (check (values->list (maybe->values (nothing))) => '())
 
   (check (values->list (maybe->two-values (nothing)))        => '(#f #f))
   (check (values->list (maybe->two-values (just #t)))        => '(#t #t))
-  (check (catch-exceptions (maybe->two-values (just #t #t))) => 'exception)
 
   (check (just-of-z? (two-values->maybe (lambda () (values 'z #t)))) => #t)
   (check (nothing? (two-values->maybe (lambda () (values 'z #f))))   => #t)
@@ -421,7 +406,7 @@
                                         (either->values (right 'z)))
                                       #f))
     => #t))
-
+
 ;;;; Map, fold, and unfold
 
 (define (check-map-fold-and-unfold)
@@ -441,7 +426,7 @@
   (check (let ((e (right #t #f)))
            (either= eqv? e (either-map values e)))
     => #t)
-
+
   ;; maybe-for-each
   (check (let ((x #f))
            (maybe-for-each (lambda (y) (set! x y)) (just #t))
@@ -481,7 +466,7 @@
                                     #t
                                     'z))
    => #t)
-
+
   (check (left-of-z? (either-unfold always not always 'z))          => #t)
   (check (either= eqv? (right #t) (either-unfold values not not #f)) => #t)
   (check (either= eqv? (right #t 'z)
@@ -491,15 +476,14 @@
                                       #t
                                       'z))
    => #t))
-
+
 ;;;; Conditional syntax
 
 (define (check-syntax)
   (print-header "Testing syntax...")
 
   (check (maybe-if (just #t) #t #f)             => #t)
-  (check (maybe-if (nothing) #t #f)             => #f)
-  (check (catch-exceptions (maybe-if 'z #t #f)) => 'exception))
+  (check (maybe-if (nothing) #t #f)             => #f))
 
 ;;;; Trivalent logic
 
