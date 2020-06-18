@@ -478,7 +478,7 @@
             (begin
              ;; successor might return multiple seeds.
              (assume (call-with-values (lambda () (successor seed)) stop?))
-             (call-with-values (lambda () (mapper (car seeds))) just)))
+             (call-with-values (lambda () (mapper (car seeds))) just))))
       (if (apply stop? seeds)
           nothing-obj
           (begin
