@@ -365,17 +365,32 @@
   (check (either->list (right #t #t)) => '(#t #t))
   (check (either->list (left #t #t))  => '(#t #t))
 
+  (check (nothing? (list->maybe '()))         => #t)
+  (check (just-of-z? (list->maybe '(z)))      => #t)
+  (check (left-of-z? (list->either '() 'z))   => #t)
+  (check (right-of-z? (list->either '(z) #f)) => #t)
+
   (check (maybe->truth (nothing))                       => #f)
   (check (maybe->truth (just #t))                       => #t)
   (check (catch-exceptions (maybe->truth (just #t #t))) => 'exception)
   (check (nothing? (truth->maybe #f))                   => #t)
   (check (just-of-z? (truth->maybe 'z))                 => #t)
 
-  (check (eof-object? (maybe->generator (nothing)))         => #t)
-  (check (maybe->generator (just #t))                       => #t)
-  (check (catch-exceptions (maybe->generator (just #t #t))) => 'exception)
-  (check (nothing? (generator->maybe (eof-object)))         => #t)
-  (check (just-of-z? (generator->maybe 'z))                 => #t)
+  (check (maybe->list-truth (just 'z #t))   => '(z #t))
+  (check (maybe->list-truth (nothing))      => #f)
+  (check (either->list-truth (right 'z #t)) => '(z #t))
+  (check (either->list-truth (left 'z))     => #f)
+
+  (check (just-of-z? (list-truth->maybe '(z)))   => #t)
+  (check (nothing? (list-truth->maybe #f))       => #t)
+  (check (right-of-z? (list-truth->either '(z))) => #t)
+  (check (left-of-z? (list-truth->either #f 'z)) => #t)
+
+  (check (eof-object? (maybe->generation (nothing)))         => #t)
+  (check (maybe->generation (just #t))                       => #t)
+  (check (catch-exceptions (maybe->generation (just #t #t))) => 'exception)
+  (check (nothing? (generation->maybe (eof-object)))         => #t)
+  (check (just-of-z? (generation->maybe 'z))                 => #t)
 
   ;; maybe->values and friends
   (check (maybe->values (just #t))                => #t)
@@ -457,26 +472,25 @@
   (check (either-fold cons '() (right #t)) => '(#t))
   (check (either-fold * 2 (right 3 4))     => 24)
 
-  (check (nothing? (maybe-unfold always not #f #f))             => #t)
-  (check (maybe= eqv? (just #t) (maybe-unfold never not #f #f)) => #t)
+  (check (nothing? (maybe-unfold always not always #f))           => #t)
+  (check (maybe= eqv? (just #t) (maybe-unfold values not not #f)) => #t)
   (check (maybe= eqv? (just #t 'z)
-                      (maybe-unfold never values #f #t 'z))
-    => #t)
-  (check (maybe= eqv? (just #t 'z)
-                      (maybe-unfold never (constantly (values #t 'z)) #f))
-    => #t)
+                      (maybe-unfold (lambda (b _) (not b))
+                                    values
+                                    (lambda (b x) (values (not b) x))
+                                    #t
+                                    'z))
+   => #t)
 
-  (check (left-of-z? (either-unfold always not #f 'z))             => #t)
-  (check (either= eqv? (right #t) (either-unfold never not #f #f)) => #t)
+  (check (left-of-z? (either-unfold always not always 'z))          => #t)
+  (check (either= eqv? (right #t) (either-unfold values not not #f)) => #t)
   (check (either= eqv? (right #t 'z)
-                       (either-unfold never values #f #t 'z))
-    => #t)
-  (check (either= eqv? (left #t 'z)
-                       (either-unfold always values #f #t 'z))
-    => #t)
-  (check (either= eqv? (right #t 'z)
-                       (either-unfold never (constantly (values #t 'z)) #f))
-    => #t))
+                       (either-unfold (lambda (b _) (not b))
+                                      values
+                                      (lambda (b x) (values (not b) x))
+                                      #t
+                                      'z))
+   => #t))
 
 ;;;; Conditional syntax
 
