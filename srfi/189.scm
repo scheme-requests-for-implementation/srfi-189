@@ -52,10 +52,6 @@
 (define (singleton? lis)
   (and (pair? lis) (null? (cdr lis))))
 
-(define (ensure-singleton lis msg)
-  (unless (singleton? lis)
-    (error msg lis)))
-
 ;; Calls proc on the car of args if args is a singleton.  Otherwise,
 ;; calls proc with the elements of args as its arguments.
 ;; Both proc and args should be identifiers.
@@ -174,9 +170,9 @@
   (maybe-ref maybe
              nothing
              (lambda objs
-               (if (and (singleton? objs) (maybe? (car objs)))
-                   (car objs)
-                   (error "maybe-join: invalid payload" objs)))))
+               (assume (and (singleton? objs) (maybe? (car objs)))
+                       "maybe-join: invalid payload")
+               (car objs))))
 
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
@@ -208,9 +204,9 @@
   (either-ref either
               (const either)
               (lambda objs
-                (if (and (singleton? objs) (either? (car objs)))
-                    (car objs)
-                    (error "either-join: invalid payload" objs)))))
+                (assume (and (singleton? objs) (either? (car objs)))
+                        "either-join: invalid payload")
+                (car objs))))
 
 (define (either-bind either mproc . mprocs)
   (assume (either? either))
@@ -354,7 +350,7 @@
   (maybe-ref maybe
              (lambda () #f)
              (lambda objs
-               (ensure-singleton objs "maybe->truth: invalid payload")
+               (assume (singleton? objs) "maybe->truth: invalid payload")
                (car objs))))
 
 ;; If either is a Right, return its payload; otherwise, return false.
@@ -362,7 +358,7 @@
   (either-ref either
               (const #f)
               (lambda objs
-                (ensure-singleton objs "either->truth: invalid payload")
+                (assume (singleton? objs) "either->truth: invalid payload")
                 (car objs))))
 
 (define (truth->maybe obj)
@@ -400,7 +396,8 @@
   (maybe-ref maybe
              (lambda () (eof-object))
              (lambda objs
-               (ensure-singleton objs "maybe->generation: invalid payload")
+               (assume (singleton? objs)
+                       "maybe->generation: invalid payload")
                (car objs))))
 
 (define (generation->maybe obj)
@@ -424,17 +421,17 @@
   (maybe-ref maybe
              (lambda () (values #f #f))
              (lambda objs
-               (ensure-singleton objs
-                                 "maybe->two-values: invalid payload")
+               (assume (singleton? objs)
+                       "maybe->two-values: invalid payload")
                (values (car objs) #t))))
 
 (define (two-values->maybe producer)
   (call-with-values
    producer
-   (case-lambda
-     ((obj success)
-      (if success (just obj) nothing-obj))
-     (vals (error "two-values->maybe: wrong number of values" vals)))))
+   (lambda objs
+     (assume (= (length objs) 2)
+             "two-values->maybe: wrong number of values")
+     (if (cadr objs) (just (car objs)) nothing-obj))))
 
 (define (either->values either)
   (either-ref either (const (values)) values))
