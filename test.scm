@@ -358,10 +358,15 @@
   (check (left-of-z? (list->either '() 'z))   => #t)
   (check (right-of-z? (list->either '(z) #f)) => #t)
 
-  (check (maybe->truth (nothing))                       => #f)
-  (check (maybe->truth (just #t))                       => #t)
-  (check (nothing? (truth->maybe #f))                   => #t)
-  (check (just-of-z? (truth->maybe 'z))                 => #t)
+  (check (maybe->truth (nothing))   => #f)
+  (check (maybe->truth (just 'z))   => 'z)
+  (check (either->truth (left 'z))  => #f)
+  (check (either->truth (right 'z)) => 'z)
+
+  (check (nothing? (truth->maybe #f))        => #t)
+  (check (just-of-z? (truth->maybe 'z))      => #t)
+  (check (left-of-z? (truth->either #f 'z))  => #t)
+  (check (right-of-z? (truth->either 'z #f)) => #t)
 
   (check (maybe->list-truth (just 'z #t))   => '(z #t))
   (check (maybe->list-truth (nothing))      => #f)

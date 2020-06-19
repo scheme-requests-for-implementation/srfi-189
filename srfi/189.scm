@@ -340,7 +340,6 @@
   (assume (or (null? lis) (pair? lis)))
   (if (null? lis) nothing-obj (raw-just lis)))
 
-;; FIXME: Clarify arguments.
 (define (list->either lis . default-objs)
   (assume (or (null? lis) (pair? lis)))
   (if (null? lis) (raw-left default-objs) (raw-right lis)))
@@ -364,7 +363,8 @@
 (define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
 
-;;; TODO: truth->either, once we clarify the value of (truth->either #f).
+(define (truth->either obj . default-objs)
+  (if obj (right obj) (raw-left default-objs)))
 
 (define (maybe->list-truth maybe)
   (assume (maybe? maybe))
