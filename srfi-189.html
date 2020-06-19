@@ -268,14 +268,14 @@ and a non-empty list to represent success.</p>
 <p><code>(maybe-&gt;list</code> <em>maybe</em><code>)</code><br>
 <code>(either-&gt;list</code> <em>either</em><code>)</code></p>
 <p>Returns a list whose elements are the payload of <em>maybe/either</em>;
-if <em>maybe</em> is Nothing, returns the empty list.
+if <em>maybe/either</em> is Nothing/Left, returns the empty list.
 It is an error to mutate the result of this procedure.</p>
 <p><code>(list-&gt;maybe</code> <em>list</em><code>)</code></p>
 <p>If <em>list</em> is empty, returns Nothing;
 otherwise, wraps the list elements in a Just and returns it.</p>
-<p><code>(list-&gt;either</code> <em>list</em> ...<code>)</code></p>
+<p><code>(list-&gt;either</code> <em>list obj</em> ...<code>)</code></p>
 <p>If <em>list</em> is empty, 
-wraps <em>obj</em> in a Left and returns it;
+wraps <em>objs</em> in a Left and returns it;
 otherwise, wraps the list elements in a Right and returns that.</p>
 <p>&#9758; The following procedures interface between the Maybe and Either protocols and
 the <em>truth</em> protocol, which uses <code>#f</code> to represent failure
@@ -285,9 +285,9 @@ and a single true value to represent success.</p>
 <p>If <em>maybe/either</em> is a Just/Right, returns its payload; otherwise returns <code>#f</code>.
 It is an error if the Just/Right does not have exactly one value.</p>
 <p><code>(truth-&gt;maybe</code> <em>obj</em><code>)</code><br>
-<code>(truth-&gt;either</code> <em>obj</em><code>)</code></p>
-<p>If <em>obj</em> is <code>#f</code>, return Nothing; otherwise, return a Just whose
-payload is <em>obj</em>.
+<code>(truth-&gt;either</code> <em>obj1 obj2</em> ...<code>)</code></p>
+<p>If <em>obj</em> is <code>#f</code>, return Nothing / a Left of <em>obj2s</em>;
+otherwise, return a Just/Right  whose payload is <em>obj</em>.
 <p>&#9758; The following procedures interface between the Maybe protocol
 and the <em>list-truth</em> protocol, which uses <code>#f</code> to represent failure
 and a list to represent success.</p>
