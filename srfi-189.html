@@ -180,12 +180,15 @@ returning the next interim result.
 When no more <em>mprocs</em> are available,
 the interim result is returned as the final result.</p>
 <p>It is an error if one of the <em>mprocs</em> does not accept as arguments the
-number of values produced by its predecessor.</p>
+number of values wrapped in the Just/Right produced by its predecessor.</p>
 <p><code>(maybe-bind</code> <em>maybe mproc1 mproc2</em> ...<code>)</code><br>
 <code>(either-bind</code> <em>either mproc1 mproc2</em> ...<code>)</code>  </p>
-<p>Monadic bind.  Convenience functions that behave as if they
-invoked <code>maybe-compose</code>/<code>either-compose</code>
-and applied the resulting mproc to <em>maybe/either</em>, returning the results.</p>
+<p>Monadic bind.  If <em>maybe/either</em> is a Just/Right,
+it behaves as if <code>maybe-compose/either-compose</code>
+were applied to <em>procs</em>, and the resulting mproc
+applied to the payload of <em>maybe/either</em>.
+But if <em>maybe/either</em> is a Nothing/Left, it
+is immediately returned.</p>
 <h3 id="sequence-operations">Sequence operations</h3>
 <p>These procedures treat Maybes (and in some cases Eithers)
 as a sequence of length 0 or 1.  This length depends only on the type
