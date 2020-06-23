@@ -82,15 +82,15 @@
 
 (define (list->just lis)
   (assume (or (null? lis) (pair? lis)))
-  (raw-just lis))
+  (raw-just (list-copy lis)))
 
 (define (list->right lis)
   (assume (or (null? lis) (pair? lis)))
-  (raw-right lis))
+  (raw-right (list-copy lis)))
 
 (define (list->left lis)
   (assume (or (null? lis) (pair? lis)))
-  (raw-left lis))
+  (raw-left (list-copy lis)))
 
 (define (maybe->either maybe . default-objs)
   (maybe-ref maybe (lambda () (raw-left default-objs)) right))
@@ -338,11 +338,13 @@
 
 (define (list->maybe lis)
   (assume (or (null? lis) (pair? lis)))
-  (if (null? lis) nothing-obj (raw-just lis)))
+  (if (null? lis) nothing-obj (raw-just (list-copy lis))))
 
 (define (list->either lis . default-objs)
   (assume (or (null? lis) (pair? lis)))
-  (if (null? lis) (raw-left default-objs) (raw-right lis)))
+  (if (null? lis)
+      (raw-left default-objs)
+      (raw-right (list-copy lis))))
 
 ;; If maybe is a Just, return its payload; otherwise, return false.
 (define (maybe->truth maybe)
@@ -378,14 +380,14 @@
   (if list-or-false
       (begin
        (assume (or (null? list-or-false) (pair? list-or-false)))
-       (raw-just list-or-false))
+       (raw-just (list-copy list-or-false)))
       nothing-obj))
 
 (define (list-truth->either list-or-false . default-objs)
   (if list-or-false
       (begin
        (assume (or (null? list-or-false) (pair? list-or-false)))
-       (raw-right list-or-false))
+       (raw-right (list-copy list-or-false)))
       (raw-left default-objs)))
 
 ;;; The following procedures interface between the Maybe protocol and
