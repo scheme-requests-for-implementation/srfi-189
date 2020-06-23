@@ -80,6 +80,28 @@
 (define (right . objs)
   (raw-right objs))
 
+(define (list->just lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-just lis))
+
+(define (list->right lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-right lis))
+
+(define (list->left lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-left lis))
+
+(define (maybe->either maybe . default-objs)
+  (maybe-ref maybe (lambda () (raw-left default-objs)) right))
+
+(define (either->maybe either)
+  (either-ref either (const nothing-obj) just))
+
+(define (either-swap either)
+  (assume (either? either))
+  (either-ref either right left))
+
 ;;;; Predicates
 
 (define (maybe? obj)
@@ -106,10 +128,6 @@
 (define (either? obj)
   (or (left? obj) (right? obj)))
 
-(define (either-swap either)
-  (assume (either? either))
-  (either-ref either right left))
-
 ;; True if all eithers are all Lefts or all Rights and their payloads
 ;; are equal in the sense of equal.
 (define (either= equal . eithers)
@@ -307,24 +325,6 @@
                     container)))))))
 
 ;;;; Conversion
-
-(define (maybe->either maybe . default-objs)
-  (maybe-ref maybe (lambda () (raw-left default-objs)) right))
-
-(define (either->maybe either)
-  (either-ref either (const nothing-obj) just))
-
-(define (list->just lis)
-  (assume (or (null? lis) (pair? lis)))
-  (raw-just lis))
-
-(define (list->right lis)
-  (assume (or (null? lis) (pair? lis)))
-  (raw-right lis))
-
-(define (list->left lis)
-  (assume (or (null? lis) (pair? lis)))
-  (raw-left lis))
 
 ;;;; Protocol conversion
 

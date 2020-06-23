@@ -88,9 +88,24 @@
 
 ;;;; Tests
 
-(define (check-misc)
+(define (check-constructors)
+  (print-header "Testing constructors...")
+
   ;; Uniqueness of the Nothing object.
   (check (eq? (nothing) (nothing)) => #t)
+
+  ;; list->just and list->right
+  (check (maybe= eqv? (just #t #t) (list->just '(#t #t)))    => #t)
+  (check (either= eqv? (right #t #t) (list->right '(#t #t))) => #t)
+  (check (either= eqv? (left #t #t) (list->left '(#t #t)))   => #t)
+
+  ;; maybe->either and either->maybe
+  (check (left-of-z? (maybe->either (nothing) 'z))                    => #t)
+  (check (right-of-z? (maybe->either (just 'z) #f))                   => #t)
+  (check (either= eqv? (right #t #t) (maybe->either (just #t #t) #f)) => #t)
+  (check (nothing? (either->maybe (left #t)))                         => #t)
+  (check (just-of-z? (either->maybe (right 'z)))                      => #t)
+  (check (maybe= eqv? (just #t #t) (either->maybe (right #t #t)))     => #t)
 
   ;; either-swap
   (check (either= eqv? (right #t #t) (either-swap (left #t #t))) => #t)
@@ -329,25 +344,11 @@
                          (right '((1 #t) (2 #f))))
     => #t))
 
-;;;; Conversion procedures
+;;;; Protocol conversion procedures
 
 (define (check-conversions)
   (print-header "Testing conversions...")
 
-  ;; maybe->either and either->maybe
-  (check (left-of-z? (maybe->either (nothing) 'z))                    => #t)
-  (check (right-of-z? (maybe->either (just 'z) #f))                   => #t)
-  (check (either= eqv? (right #t #t) (maybe->either (just #t #t) #f)) => #t)
-  (check (nothing? (either->maybe (left #t)))                         => #t)
-  (check (just-of-z? (either->maybe (right 'z)))                      => #t)
-  (check (maybe= eqv? (just #t #t) (either->maybe (right #t #t)))     => #t)
-
-  ;; list->just and list->right
-  (check (maybe= eqv? (just #t #t) (list->just '(#t #t)))    => #t)
-  (check (either= eqv? (right #t #t) (list->right '(#t #t))) => #t)
-  (check (either= eqv? (left #t #t) (list->left '(#t #t)))   => #t)
-
-  ;; maybe->list and either->list
   (check (maybe->list (nothing))      => '())
   (check (maybe->list (just #t #t))   => '(#t #t))
   (check (either->list (right #t #t)) => '(#t #t))
@@ -382,7 +383,7 @@
   (check (maybe->generation (just #t))                       => #t)
   (check (nothing? (generation->maybe (eof-object)))         => #t)
   (check (just-of-z? (generation->maybe 'z))                 => #t)
-
+
   ;; maybe->values and friends
   (check (maybe->values (just #t))                => #t)
   (check (values->list (maybe->values (nothing))) => '())
@@ -411,7 +412,7 @@
                                         (either->values (right 'z)))
                                       #f))
     => #t))
-
+
 ;;;; Map, fold, and unfold
 
 (define (check-map-fold-and-unfold)
@@ -431,7 +432,7 @@
   (check (let ((e (right #t #f)))
            (either= eqv? e (either-map values e)))
     => #t)
-
+
   ;; maybe-for-each
   (check (let ((x #f))
            (maybe-for-each (lambda (y) (set! x y)) (just #t))
@@ -530,7 +531,7 @@
   (check (nothing? (tri-merge))                                => #t))
 
 (define (check-all)
-  (check-misc)
+  (check-constructors)
   (check-predicates)
   (check-accessors)
   (check-join-and-bind)
