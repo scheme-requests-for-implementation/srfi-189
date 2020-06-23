@@ -71,7 +71,7 @@ only a failure.
 Some of the Either-accepting procedures in this SRFI treat Left and Right asymmetrically;
 specifically, a Left is considered empty by the join, bind, and sequence
 procedures, and the <code>either-ref</code> procedure by default unwraps a Right
-but raises the the payload of a Left as an exception.
+but raises the payload of a Left as an exception.
 It is also possible to use Left and Right simply as two
 distinguishable types of container for a single value,
 or to interchange the roles of Left and
@@ -81,7 +81,7 @@ accept multiple arguments and return multiple values, this SRFI allows
 a Just, Left, or Right container to hold more than one object,
 or indeed no objects at all.  In particular, a Just containing no objects
 is not the same as a Nothing: it represents success when there are
-no actual values to return, as in a procedure called solely for effect.)
+no actual values to return, as in a procedure called solely for effect.
 The specification presented here, therefore, differs in several ways
 from its analogues in other languages.</p>
 <h2 id="specification">Specification</h2>
@@ -116,7 +116,7 @@ some number of values.</p>
 <p><code>(left</code> <em>obj</em> ...<code>)</code></p>
 <p>Returns the <em>objs</em> wrapped in a Left.</p>
 <p><code>(list-&gt;just</code> <em>list</em><code>)</code><br>
-<code>(list-&gt;left</code> <em>list</em><code>)</code></br>
+<code>(list-&gt;left</code> <em>list</em><code>)</code><br>
 <code>(list-&gt;right</code> <em>list</em><code>)</code></p>
 <p>Returns a Just / Left / Right whose values are the elements
 of <em>list</em>.  Note that these procedures are not monadic;
@@ -165,7 +165,7 @@ The default value of <em>success</em> is <code>values</code>.</p>
 <p><code>(either-ref</code> <em>either</em> <em>failure</em> [<em>success</em>]<code>)</code></p>
 <p>If <em>either</em> is a Right, tail-calls the procedure <em>success</em>
 on the values of its payload and returns the result.  Otherwise, it
-tail-calls the procedure <em>failure</em> on 
+tail-calls the procedure <em>failure</em>
 on the values of its payload and returns the result.
 The default value of <em>success</em> is <em>values</em>.</p>
 <p><code>(maybe-ref/default</code> <em>maybe default</em> ...<code>)</code><br>
@@ -177,13 +177,10 @@ returns the <em>defaults</em> as multiple values.</p>
 <code>(either-join</code> <em>either</em><code>)</code></p>
 <p>Monadic join.  If <em>maybe/either</em> is a Just/Right whose single payload object is a Maybe/Either,
 returns that payload; if it is a Nothing/Left, returns <em>maybe/either</em>.
-In all other cases (including a Just with multiple values) it is an error.  Thus
+In all other cases (including a Just/Right with multiple values) it is an error.  Thus
 <code>(maybe-join (just (just</code> <em>x</em><code>))</code> returns Just <em>x</em> and
-<code>(maybe-join (just (nothing))</code> returns Nothing.
+<code>(maybe-join (just (nothing))</code> returns Nothing,
 and similarly for <code>either-join</code>.
-<p>Monadic join.  If <em>either</em> is a Right whose single payload object is an Either,
-returns that payload; if <em>either</em> is a Left, returns the Left.
-In all other cases (including multiple values in <em>either</em>) it is an error.
 <p><code>(maybe-compose</code> <em>mproc1 mproc2</em> ...<code>)</code><br>
 <code>(either-compose</code> <em>mproc1 mproc2</em> ...<code>)</code>  </p>
 <p>Returns an mproc that accepts zero or more arguments and 
@@ -206,7 +203,7 @@ But if <em>maybe/either</em> is a Nothing/Left, it
 is immediately returned.</p>
 <h3 id="sequence-operations">Sequence operations</h3>
 <p>These procedures treat Maybes (and in some cases Eithers)
-as a sequence of length 0 or 1.  This length depends only on the type
+as sequences of length 0 or 1.  This length depends only on the type
 of the container and not on the number of objects it contains.</p>
 <p><code>(maybe-length</code> <em>maybe</em><code>)</code><br>
 <code>(either-length</code> <em>either</em><code>)</code></p>
@@ -312,7 +309,7 @@ If <em>maybe/either</em> is Nothing / a Left,
 then an end-of-file object is returned.</p>
 <p><code>(generation-&gt;maybe</code> <em>obj</em><code>)</code><br>
 <code>(generation-&gt;either</code> <em>obj</em><code>)</code></p>
-If <em>obj</em> is an end-of-file object, return Nothing / a Left of <em>objs</em>..
+If <em>obj</em> is an end-of-file object, return Nothing / a Left of <em>objs</em>.
 Otherwise, return <em>obj</em> wrapped in a Just.
 <p><big>&#9758;</big> The following procedures interface between the Maybe and Either protocols
 and the <em>values</em> protocol, which returns one or more values to represent success

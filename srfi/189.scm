@@ -52,10 +52,6 @@
 (define (singleton? lis)
   (and (pair? lis) (null? (cdr lis))))
 
-(define (ensure-singleton lis msg)
-  (unless (singleton? lis)
-    (error msg lis)))
-
 ;; Calls proc on the car of args if args is a singleton.  Otherwise,
 ;; calls proc with the elements of args as its arguments.
 ;; Both proc and args should be identifiers.
@@ -84,6 +80,28 @@
 (define (right . objs)
   (raw-right objs))
 
+(define (list->just lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-just (list-copy lis)))
+
+(define (list->right lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-right (list-copy lis)))
+
+(define (list->left lis)
+  (assume (or (null? lis) (pair? lis)))
+  (raw-left (list-copy lis)))
+
+(define (maybe->either maybe . default-objs)
+  (maybe-ref maybe (lambda () (raw-left default-objs)) right))
+
+(define (either->maybe either)
+  (either-ref either (const nothing-obj) just))
+
+(define (either-swap either)
+  (assume (either? either))
+  (either-ref either right left))
+
 ;;;; Predicates
 
 (define (maybe? obj)
@@ -97,7 +115,7 @@
 (define (maybe= equal . maybes)
   (assume (procedure? equal))
   (assume (pair? maybes))
-  (let lp ((maybe1 (car maybes)))
+  (let ((maybe1 (car maybes)))
     (every (lambda (maybe2) (%maybe=2 equal maybe1 maybe2))
            (cdr maybes))))
 
@@ -109,10 +127,6 @@
 
 (define (either? obj)
   (or (left? obj) (right? obj)))
-
-(define (either-swap either)
-  (assume (either? either))
-  (either-ref either right left))
 
 ;; True if all eithers are all Lefts or all Rights and their payloads
 ;; are equal in the sense of equal.
@@ -146,7 +160,7 @@
       (let ((objs (just-objs maybe)))
         (fast-list->values objs))
       (fast-list->values defaults)))
-
+
 (define (%either-ref-single either accessor cont)
   (let ((objs (accessor either)))
     (fast-apply cont objs)))
@@ -174,10 +188,10 @@
   (maybe-ref maybe
              nothing
              (lambda objs
-               (if (and (singleton? objs) (maybe? (car objs)))
-                   (car objs)
-                   (error "maybe-join: invalid payload" objs)))))
-
+               (assume (and (singleton? objs) (maybe? (car objs)))
+                       "maybe-join: invalid payload")
+               (car objs))))
+
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
   (if (null? mprocs)
@@ -187,18 +201,18 @@
                    nothing
                    (lambda objs
                      (if (null? mprocs)
-                         (apply mp objs)  ; tail-call last
-                         (lp (apply mp objs)
+                         (fast-apply mp objs) ; tail-call last
+                         (lp (fast-apply mp objs)
                              (car mprocs)
                              (cdr mprocs))))))))
-
+
 (define (maybe-compose . mprocs)
   (assume (pair? mprocs))
   (lambda args
     (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
       (if (null? rest)
           (fast-apply mproc args)
-          (maybe-ref (apply mproc args)
+          (maybe-ref (fast-apply mproc args)
                      nothing
                      (lambda objs
                        (lp objs (car rest) (cdr rest))))))))
@@ -208,9 +222,9 @@
   (either-ref either
               (const either)
               (lambda objs
-                (if (and (singleton? objs) (either? (car objs)))
-                    (car objs)
-                    (error "either-join: invalid payload" objs)))))
+                (assume (and (singleton? objs) (either? (car objs)))
+                        "either-join: invalid payload")
+                (car objs))))
 
 (define (either-bind either mproc . mprocs)
   (assume (either? either))
@@ -221,8 +235,8 @@
                     (const e)
                     (lambda objs
                       (if (null? mprocs)
-                          (apply mp objs)  ; tail-call last
-                          (lp (apply mp objs)
+                          (fast-apply mp objs)  ; tail-call last
+                          (lp (fast-apply mp objs)
                               (car mprocs)
                               (cdr mprocs))))))))
 
@@ -232,7 +246,7 @@
     (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
       (if (null? rest)
           (fast-apply mproc args)
-          (either-ref (apply mproc args)
+          (either-ref (fast-apply mproc args)
                       left
                       (lambda objs
                         (lp objs (car rest) (cdr rest))))))))
@@ -312,23 +326,7 @@
 
 ;;;; Conversion
 
-(define (maybe->either maybe . default-objs)
-  (maybe-ref maybe (lambda () (raw-left default-objs)) right))
-
-(define (either->maybe either)
-  (either-ref either (const nothing-obj) just))
-
-(define (list->just lis)
-  (assume (or (null? lis) (pair? lis)))
-  (raw-just lis))
-
-(define (list->right lis)
-  (assume (or (null? lis) (pair? lis)))
-  (raw-right lis))
-
-(define (list->left lis)
-  (assume (or (null? lis) (pair? lis)))
-  (raw-left lis))
+;;;; Protocol conversion
 
 (define (maybe->list maybe)
   (assume (maybe? maybe))
@@ -338,29 +336,73 @@
   (assume (either? either))
   ((if (right? either) right-objs left-objs) either))
 
+(define (list->maybe lis)
+  (assume (or (null? lis) (pair? lis)))
+  (if (null? lis) nothing-obj (raw-just (list-copy lis))))
+
+(define (list->either lis . default-objs)
+  (assume (or (null? lis) (pair? lis)))
+  (if (null? lis)
+      (raw-left default-objs)
+      (raw-right (list-copy lis))))
+
 ;; If maybe is a Just, return its payload; otherwise, return false.
 (define (maybe->truth maybe)
   (maybe-ref maybe
              (lambda () #f)
              (lambda objs
-               (ensure-singleton objs "maybe->lisp: invalid payload")
+               (assume (singleton? objs) "maybe->truth: invalid payload")
                (car objs))))
 
+;; If either is a Right, return its payload; otherwise, return false.
+(define (either->truth either)
+  (either-ref either
+              (const #f)
+              (lambda objs
+                (assume (singleton? objs) "either->truth: invalid payload")
+                (car objs))))
+
 (define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
-
-;;; The following procedures interface between the Maybe protocol and
-;;; the generator protocol, which uses an EOF object to represent failure
-;;; and any other value to represent success.
 
-(define (maybe->generator maybe)
+(define (truth->either obj . default-objs)
+  (if obj (right obj) (raw-left default-objs)))
+
+(define (maybe->list-truth maybe)
+  (assume (maybe? maybe))
+  (if (just? maybe) (just-objs maybe) #f))
+
+(define (either->list-truth either)
+  (assume (either? either))
+  (if (right? either) (right-objs either) #f))
+
+(define (list-truth->maybe list-or-false)
+  (if list-or-false
+      (begin
+       (assume (or (null? list-or-false) (pair? list-or-false)))
+       (raw-just (list-copy list-or-false)))
+      nothing-obj))
+
+(define (list-truth->either list-or-false . default-objs)
+  (if list-or-false
+      (begin
+       (assume (or (null? list-or-false) (pair? list-or-false)))
+       (raw-right (list-copy list-or-false)))
+      (raw-left default-objs)))
+
+;;; The following procedures interface between the Maybe protocol and
+;;; the generation protocol, which uses an EOF object to represent
+;;; failure and any other value to represent success.
+
+(define (maybe->generation maybe)
   (maybe-ref maybe
              (lambda () (eof-object))
              (lambda objs
-               (ensure-singleton objs "maybe->generator: invalid payload")
+               (assume (singleton? objs)
+                       "maybe->generation: invalid payload")
                (car objs))))
 
-(define (generator->maybe obj)
+(define (generation->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
 
 (define (maybe->values maybe)
@@ -372,7 +414,7 @@
    producer
    (lambda objs
      (if (null? objs) nothing-obj (raw-just objs)))))
-
+
 ;;; The following procedures interface between the Maybe protocol and
 ;;; the two-values protocol, which returns |#f, #f| to represent
 ;;; failure and |<any object>, #t| to represent success.
@@ -381,17 +423,17 @@
   (maybe-ref maybe
              (lambda () (values #f #f))
              (lambda objs
-               (ensure-singleton objs
-                                 "maybe->two-values: invalid payload")
+               (assume (singleton? objs)
+                       "maybe->two-values: invalid payload")
                (values (car objs) #t))))
 
 (define (two-values->maybe producer)
   (call-with-values
    producer
-   (case-lambda
-     ((obj success)
-      (if success (just obj) nothing-obj))
-     (vals (error "two-values->maybe: wrong number of values" vals)))))
+   (lambda objs
+     (assume (= (length objs) 2)
+             "two-values->maybe: wrong number of values")
+     (if (cadr objs) (just (car objs)) nothing-obj))))
 
 (define (either->values either)
   (either-ref either (const (values)) values))
@@ -402,13 +444,13 @@
    producer
    (lambda objs
      (if (null? objs) (raw-left default-objs) (raw-right objs)))))
-
+
 ;;;; Map, fold, and unfold
 
 (define (maybe-map proc maybe)
   (assume (procedure? proc))
   (maybe-bind maybe (lambda objs
-                      (call-with-values (lambda () (apply proc objs))
+                      (call-with-values (lambda () (fast-apply proc objs))
                                         just))))
 
 (define (maybe-for-each proc maybe)
@@ -421,25 +463,34 @@
   (maybe-ref maybe
              (lambda () nil)
              (lambda objs  ; apply kons to all payload values plus nil
-               (apply kons (append objs (list nil))))))
-
+               (if (singleton? objs)
+                   (kons (car objs) nil)
+                   (apply kons (append objs (list nil)))))))
+
 ;; The unused successor argument is for consistency only and may
 ;; be anything.
 (define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
   (if (singleton? seeds)
-      (if (stop? (car seeds))  ; fast path
-          nothing-obj
-          (just (mapper (car seeds))))
+      (let ((seed (car seeds)))  ; fast path
+        (if (stop? seed)
+            nothing-obj
+            (begin
+             ;; successor might return multiple seeds.
+             (assume (call-with-values (lambda () (successor seed)) stop?))
+             (call-with-values (lambda () (mapper (car seeds))) just))))
       (if (apply stop? seeds)
           nothing-obj
-          (call-with-values (lambda () (apply mapper seeds)) just))))
+          (begin
+           (assume (call-with-values (lambda () (apply successor seeds))
+                                     stop?))
+           (call-with-values (lambda () (apply mapper seeds)) just)))))
 
 (define (either-map proc either)
   (assume (procedure? proc))
   (either-bind either (lambda objs
-                        (call-with-values (lambda () (apply proc objs))
+                        (call-with-values (lambda () (fast-apply proc objs))
                                           right))))
 
 (define (either-for-each proc either)
@@ -452,20 +503,27 @@
   (either-ref either
               (const nil)
               (lambda objs  ; apply kons to all payload values plus nil
-                (apply kons (append objs (list nil))))))
+                (if (singleton? objs)
+                    (kons (car objs) nil)
+                    (apply kons (append objs (list nil)))))))
 
-;; The unused successor argument is for consistency only and may
-;; be anything.
 (define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
   (if (singleton? seeds)
-      (if (stop? (car seeds))  ; fast path
-          (raw-left seeds)
-          (right (mapper (car seeds))))
+      (let ((seed (car seeds)))  ; fast path
+        (if (stop? seed)
+            (raw-left seeds)
+            (begin
+             ;; successor might return multiple values.
+             (assume (call-with-values (lambda () (successor seed)) stop?))
+             (call-with-values (lambda () (apply mapper seeds)) right))))
       (if (apply stop? seeds)
           (raw-left seeds)
-          (call-with-values (lambda () (apply mapper seeds)) right))))
+          (begin
+           (assume (call-with-values (lambda () (apply successor seeds))
+                                     stop?))
+           (call-with-values (lambda () (apply mapper seeds)) right)))))
 
 ;;;; Conditional syntax
 
