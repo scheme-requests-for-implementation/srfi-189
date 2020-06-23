@@ -233,7 +233,7 @@ is applied to them.
 But if it is a Left/Nothing, that object is immediately returned as the value of
 <code>maybe-sequence/either-sequence</code>.</p>
 <p>Assuming there are no Lefts/Nothings, the <em>map</em> function is then responsible
-for contructing the new mappable out of the results of the calls on <em>aggregator</em>.</p>
+for constructing the new mappable out of the results of the calls on <em>aggregator</em>.</p>
 <p>For example, a list of Justs becomes a Just list of lists if 
 the map procedure is <code>map</code> and the aggregator is <code>list</code>.
 In the same way, a vector of Rights containing one value each becomes
