@@ -272,7 +272,7 @@ It is an error to mutate the result of this procedure.</p>
 <p><code>(list-&gt;maybe</code> <em>list</em><code>)</code><br>
 <code>(list-&gt;either</code> <em>list obj</em> ...<code>)</code></p>
 <p>If <em>list</em> is empty, 
-returns Nothing / a list of <em>objs</em> and returns it;
+returns Nothing / wraps <em>objs</em> in a Left and returns it;
 otherwise, wraps the list elements in a Just/Right and returns that.</p>
 <p><big>&#9758;</big> The following procedures interface between the Maybe and Either protocols and
 the <em>truth</em> protocol, which uses <code>#f</code> to represent failure
