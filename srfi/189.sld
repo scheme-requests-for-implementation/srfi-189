@@ -56,6 +56,7 @@
 
           tri-not tri=? tri-and tri-or tri-merge
 
+          maybe-and maybe-or maybe-and-let* either-and either-or either-and-let*
           maybe-if)
 
   (include "189.scm"))
