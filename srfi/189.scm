@@ -525,7 +525,7 @@
                                      stop?))
            (call-with-values (lambda () (apply mapper seeds)) right)))))
 
-;;;; Conditional syntax
+;;;; Syntax
 
 (define-syntax maybe-if
   (syntax-rules ()
@@ -533,6 +533,94 @@
      (let ((mval maybe-expr))
        (assume (maybe? mval))
        (if (just? mval) just-expr nothing-expr)))))
+
+(define-syntax maybe-and
+  (syntax-rules ()
+    ((_) (just unspecified))
+    ((_ expr)
+     (let ((maybe expr))
+       (assume (maybe? maybe))
+       maybe))
+    ((_ expr1 expr2 ...)
+     (let ((maybe expr1))
+       (assume (maybe? maybe))
+       (if (just? maybe) (maybe-and expr2 ...) nothing-obj)))))
+
+(define-syntax maybe-or
+  (syntax-rules ()
+    ((_) (nothing))
+    ((_ expr)
+     (let ((maybe expr))
+       (assume (maybe? maybe))
+       maybe))
+    ((_ expr1 expr2 ...)
+     (let ((maybe expr1))
+       (assume (maybe? maybe))
+       (if (just? maybe) maybe (maybe-or expr2 ...))))))
+
+(define-syntax maybe-and-let*
+  (syntax-rules ()
+    ((_ ()) (just unspecified))
+    ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
+    ((_ ((id expr))) (maybe-ref/default expr nothing-obj))
+    ((_ ((expr))) (maybe-ref/default expr nothing-obj))
+    ((_ (id)) id)
+    ((_ ((id expr) . claws) . body)
+     (maybe-bind expr
+                 (lambda (id)
+                   (maybe-and-let* claws . body))))
+    ((_ ((expr) . claws) . body)
+     (maybe-and expr (maybe-and-let* claws . body)))
+    ((_ (id . claws) . body)
+     (maybe-and id (maybe-and-let* claws . body)))
+    ((_ . _)
+     (syntax-error "ill-formed maybe-and-let* form"))))
+
+(define-syntax either-and
+  (syntax-rules ()
+    ((_) (right unspecified))
+    ((_ expr)
+     (let ((either expr))
+       (assume (either? either))
+       either))
+    ((_ expr1 expr2 ...)
+     (let ((either expr1))
+       (assume (either? either))
+       (if (right? either) (either-and expr2 ...) either)))))
+
+(define-syntax either-or
+  (syntax-rules ()
+    ((_) (left unspecified))
+    ((_ expr)
+     (let ((either expr))
+       (assume (either? either))
+       either))
+    ((_ expr1 expr2 ...)
+     (let ((either expr1))
+       (assume (either? either))
+       (if (right? either) either (either-or expr2 ...))))))
+
+(define-syntax either-and-let*
+  (syntax-rules ()
+    ((_ ()) (right unspecified))
+    ((_ () expr1 expr1 ...) (begin expr1 expr2 ...))
+    ((_ ((id expr)))
+     (let ((either expr))
+       (either-ref/default either either)))
+    ((_ ((expr)))
+     (let ((either expr))
+       (either-ref/default either either)))
+    ((_ (id)) id)
+    ((_ ((id expr) . claws) . body)
+     (either-bind expr
+                 (lambda (id)
+                   (either-and-let* claws . body))))
+    ((_ ((expr) . claws) . body)
+     (either-and expr (either-and-let* claws . body)))
+    ((_ (id . claws) . body)
+     (either-and id (either-and-let* claws . body)))
+    ((_ . _)
+     (syntax-error "ill-formed either-and-let* form"))))
 
 ;;;; Trivalent logic
 
@@ -558,7 +646,7 @@
       (just #f)
       (let ((tri-same? (make-pred (just->boolean maybe))))
         (if (every tri-same? ms) (just #t) (just #f)))))
-
+
 ;; Returns #t if all arguments are true.  If any argument is false or
 ;; Nothing, return the first such object.
 (define (tri-and . maybes)
