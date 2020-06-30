@@ -570,13 +570,9 @@
                  (lambda (id)
                    (maybe-and-let* claws . body))))
     ((_ ((expr) . claws) . body)
-     (let ((maybe expr))
-       (assume (maybe? maybe))
-       (if (just? maybe) (maybe-and-let* claws . body) nothing-obj)))
+     (maybe-and expr (maybe-and-let* claws . body)))
     ((_ (id . claws) . body)
-     (begin
-      (assume (maybe? id))
-      (if (just? id) (maybe-and-let* claws . body) nothing-obj)))
+     (maybe-and id (maybe-and-let* claws . body)))
     ((_ . _)
      (syntax-error "ill-formed maybe-and-let* form"))))
 
@@ -620,13 +616,9 @@
                  (lambda (id)
                    (either-and-let* claws . body))))
     ((_ ((expr) . claws) . body)
-     (let ((either expr))
-       (assume (either? either))
-       (if (right? either) (either-and-let* claws . body) either)))
+     (either-and expr (either-and-let* claws . body)))
     ((_ (id . claws) . body)
-     (begin
-      (assume (either? id))
-      (if (right? id) (either-and-let* claws . body) id)))
+     (either-and id (either-and-let* claws . body)))
     ((_ . _)
      (syntax-error "ill-formed either-and-let* form"))))
 
