@@ -603,7 +603,7 @@
 (define-syntax either-and-let*
   (syntax-rules ()
     ((_ ()) (right unspecified))
-    ((_ () expr1 expr1 ...) (begin expr1 expr2 ...))
+    ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
     ((_ ((id expr)))
      (let ((either expr))
        (either-ref/default either either)))
