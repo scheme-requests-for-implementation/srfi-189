@@ -537,23 +537,31 @@
 (define-syntax maybe-and
   (syntax-rules ()
     ((_) (just unspecified))
-    ((_ expr) expr)
+    ((_ expr)
+     (let ((maybe expr))
+       (assume (maybe? maybe))
+       maybe))
     ((_ expr1 expr2 ...)
-     (if (just? expr1) (maybe-and expr2 ...) (nothing)))))
+     (let ((maybe expr1))
+       (assume (maybe? maybe))
+       (if (just? maybe) (maybe-and expr2 ...) nothing-obj)))))
 
 (define-syntax maybe-or
   (syntax-rules ()
     ((_) (nothing))
-    ((_ expr) expr)
+    ((_ expr)
+     (let ((maybe expr))
+       (assume (maybe? maybe))
+       maybe))
     ((_ expr1 expr2 ...)
      (let ((maybe expr1))
+       (assume (maybe? maybe))
        (if (just? maybe) maybe (maybe-or expr2 ...))))))
 
-;; FIXME: Multiple values.
 (define-syntax maybe-and-let*
   (syntax-rules ()
     ((_ ()) (just unspecified))
-    ((_ () expr expr* ...) (begin expr expr* ...))
+    ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
     ((_ ((id expr))) (maybe-ref/default expr nothing-obj))
     ((_ ((expr))) (maybe-ref/default expr nothing-obj))
     ((_ (id)) id)
@@ -571,23 +579,31 @@
 (define-syntax either-and
   (syntax-rules ()
     ((_) (right unspecified))
-    ((_ expr) expr)
+    ((_ expr)
+     (let ((either expr))
+       (assume (either? either))
+       either))
     ((_ expr1 expr2 ...)
-     (if (right? expr1) (either-and expr2 ...) expr1))))
+     (let ((either expr1))
+       (assume (either? either))
+       (if (right? either) (either-and expr2 ...) either)))))
 
 (define-syntax either-or
   (syntax-rules ()
     ((_) (left unspecified))
-    ((_ expr) expr)
+    ((_ expr)
+     (let ((either expr))
+       (assume (either? either))
+       either))
     ((_ expr1 expr2 ...)
      (let ((either expr1))
+       (assume (either? either))
        (if (right? either) either (either-or expr2 ...))))))
 
-;; FIXME: Multiple values.
 (define-syntax either-and-let*
   (syntax-rules ()
     ((_ ()) (right unspecified))
-    ((_ () expr expr* ...) (begin expr expr* ...))
+    ((_ () expr1 expr1 ...) (begin expr1 expr2 ...))
     ((_ ((id expr)))
      (let ((either expr))
        (either-ref/default either either)))
