@@ -558,7 +558,7 @@
        (assume (maybe? maybe))
        (if (just? maybe) maybe (maybe-or expr2 ...))))))
 
-(define-syntax maybe-and-let*
+(define-syntax maybe-let*
   (syntax-rules ()
     ((_ ()) (just unspecified))
     ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
@@ -606,7 +606,7 @@
        (assume (either? either))
        (if (right? either) either (either-or expr2 ...))))))
 
-(define-syntax either-and-let*
+(define-syntax either-let*
   (syntax-rules ()
     ((_ ()) (right unspecified))
     ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
