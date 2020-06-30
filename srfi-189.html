@@ -310,7 +310,7 @@ then an end-of-file object is returned.</p>
 <p><code>(generation-&gt;maybe</code> <em>obj</em><code>)</code><br>
 <code>(generation-&gt;either</code> <em>obj</em><code>)</code></p>
 If <em>obj</em> is an end-of-file object, return Nothing / a Left of <em>objs</em>.
-Otherwise, return <em>obj</em> wrapped in a Just.
+Otherwise, return <em>obj</em> wrapped in a Just/Right.
 <p><big>&#9758;</big> The following procedures interface between the Maybe and Either protocols
 and the <em>values</em> protocol, which returns one or more values to represent success
 and zero values to represent failure.</em></p>
