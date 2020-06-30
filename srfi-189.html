@@ -390,11 +390,14 @@ then a Just/Right of an unspecified value is returned.
 If an <em>expr</em> does not evaluate to a Maybe/Either, an error is signaled.
 <p><code>(maybe-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
-The Maybe equivalent of <code>and-let*</code> from
+The Maybe/Either equivalent of <code>and-let*</code> from
 <a href="http://srfi.schemers.org/srfi-2/srfi-2.html">SRFI 2</a>.
 However, instead of testing whether a claw is true or false,
 it tests whether it is Just/Right or Nothing/Left.
-If a <em>claw</em> does not evaluate to a Maybe, an error is signaled.
+A <em>claw</em> with a variable binds the variable to the unwrapped
+Just/Right, but the result of the whole expression is
+always a Maybe/Either.
+If a <em>claw</em> does not evaluate to a Maybe/Either, an error is signaled.
 <h3 id="trivalent-logic">Trivalent logic</h3>
 <p>These procedures provide trivalent logic in the style of SQL on
 Maybe objects containing a single value.  For the purposes of this section,
