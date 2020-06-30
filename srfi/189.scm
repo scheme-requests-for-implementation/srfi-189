@@ -574,13 +574,13 @@
     ((_ ((id expr) . claws) . body)
      (maybe-bind expr
                  (lambda (id)
-                   (maybe-and-let* claws . body))))
+                   (maybe-let* claws . body))))
     ((_ ((expr) . claws) . body)
-     (maybe-and expr (maybe-and-let* claws . body)))
+     (maybe-and expr (maybe-let* claws . body)))
     ((_ (id . claws) . body)
-     (maybe-and id (maybe-and-let* claws . body)))
+     (maybe-and id (maybe-let* claws . body)))
     ((_ . _)
-     (syntax-error "ill-formed maybe-and-let* form"))))
+     (syntax-error "ill-formed maybe-let* form"))))
 
 (define-syntax either-and
   (syntax-rules ()
@@ -622,13 +622,13 @@
     ((_ ((id expr) . claws) . body)
      (either-bind expr
                  (lambda (id)
-                   (either-and-let* claws . body))))
+                   (either-let* claws . body))))
     ((_ ((expr) . claws) . body)
-     (either-and expr (either-and-let* claws . body)))
+     (either-and expr (either-let* claws . body)))
     ((_ (id . claws) . body)
-     (either-and id (either-and-let* claws . body)))
+     (either-and id (either-let* claws . body)))
     ((_ . _)
-     (syntax-error "ill-formed either-and-let* form"))))
+     (syntax-error "ill-formed either-let* form"))))
 
 ;;;; Trivalent logic
 
