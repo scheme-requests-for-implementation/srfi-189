@@ -467,8 +467,6 @@
                    (kons (car objs) nil)
                    (apply kons (append objs (list nil)))))))
 
-;; The unused successor argument is for consistency only and may
-;; be anything.
 (define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
@@ -610,7 +608,7 @@
   (syntax-rules ()
     ((_ ()) (right unspecified))
     ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
-    ((_ ((id expr)))
+    ((_ ((_ expr)))
      (let ((either expr))
        (assume (either? either))
        either))
