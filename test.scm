@@ -384,6 +384,11 @@
   (check (nothing? (generation->maybe (eof-object)))         => #t)
   (check (just-of-z? (generation->maybe 'z))                 => #t)
 
+  (check (eof-object? (either->generation (left)))         => #t)
+  (check (either->generation (right #t))                   => #t)
+  (check (left-of-z? (generation->either (eof-object) 'z)) => #t)
+  (check (right-of-z? (generation->either 'z #f))          => #t)
+
   ;; maybe->values and friends
   (check (maybe->values (just #t))                => #t)
   (check (values->list (maybe->values (nothing))) => '())
