@@ -623,16 +623,21 @@
        (assume (maybe? mval))
        (if (just? mval) just-expr nothing-expr)))))
 
+;; Return the value of expr if it satisfies pred.
+(define-syntax %guard-value
+  (syntax-rules ()
+    ((_ pred expr)
+     (let ((val expr))
+       (assume (pred val))
+       val))))
+
 ;; Maybe analog of and.  Evaluate the argument expressions in order.
 ;; If any expression evaluates to Nothing, return it.  Otherwise,
 ;; return the last Just.
 (define-syntax maybe-and
   (syntax-rules ()
     ((_) (just unspecified))
-    ((_ maybe-expr)
-     (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       maybe))
+    ((_ maybe-expr) (%guard-value maybe? maybe-expr))
     ((_ maybe-expr maybe-expr* ...)
      (let ((maybe maybe-expr))
        (assume (maybe? maybe))
@@ -646,10 +651,7 @@
 (define-syntax maybe-or
   (syntax-rules ()
     ((_) (nothing))
-    ((_ maybe-expr)
-     (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       maybe))
+    ((_ maybe-expr) (%guard-value maybe? maybe-expr))
     ((_ maybe-expr maybe-expr* ...)
      (let ((maybe maybe-expr))
        (assume (maybe? maybe))
@@ -665,14 +667,8 @@
   (syntax-rules ()
     ((_ ()) (just unspecified))
     ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
-    ((_ ((_ maybe-expr)))
-     (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       maybe))
-    ((_ ((maybe-expr)))
-     (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       maybe))
+    ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
+    ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
     ((_ (id)) (begin (assume (maybe? id)) id))
     ((_ ((id maybe-expr) . claws) . body)
      (maybe-bind maybe-expr
@@ -691,10 +687,7 @@
 (define-syntax either-and
   (syntax-rules ()
     ((_) (right unspecified))
-    ((_ either-expr)
-     (let ((either either-expr))
-       (assume (either? either))
-       either))
+    ((_ either-expr) (%guard-value either? either-expr))
     ((_ either-expr either-expr* ...)
      (let ((either either-expr))
        (assume (either? either))
@@ -708,10 +701,7 @@
 (define-syntax either-or
   (syntax-rules ()
     ((_) (left unspecified))
-    ((_ either-expr)
-     (let ((either either-expr))
-       (assume (either? either))
-       either))
+    ((_ either-expr) (%guard-value either? either-expr))
     ((_ either-expr either-expr* ...)
      (let ((either either-expr))
        (assume (either? either))
@@ -727,14 +717,8 @@
   (syntax-rules ()
     ((_ ()) (right unspecified))
     ((_ () expr expr* ...) (begin expr expr* ...))
-    ((_ ((_ either-expr)))
-     (let ((either either-expr))
-       (assume (either? either))
-       either))
-    ((_ ((either-expr)))
-     (let ((either either-expr))
-       (assume (either? either))
-       either))
+    ((_ ((_ either-expr))) (%guard-value either? either-expr))
+    ((_ ((either-expr))) (%guard-value either? either-expr))
     ((_ (id)) (begin (assume (either? id)) id))
     ((_ ((id either-expr) . claws) . body)
      (either-bind either-expr
