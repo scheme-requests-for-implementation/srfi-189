@@ -402,8 +402,15 @@
                        "maybe->generation: invalid payload")
                (car objs))))
 
+(define (either->generation either)
+  (assume (either? either))
+  (either-ref/default either (eof-object)))
+
 (define (generation->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
+
+(define (generation->either obj . default-objs)
+  (if (eof-object? obj) (raw-left default-objs) (right obj)))
 
 (define (maybe->values maybe)
   (maybe-ref maybe values values))

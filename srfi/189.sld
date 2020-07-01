@@ -50,6 +50,7 @@
           generation->maybe list->left list->maybe list->either
           maybe->list-truth either->list-truth list-truth->maybe
           list-truth->either truth->either
+          either->generation generation->either
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
           either-unfold
