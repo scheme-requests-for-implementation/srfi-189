@@ -112,7 +112,9 @@
 
 (define (either-swap either)
   (assume (either? either))
-  (either-ref either right left))  ; TODO: optimize me!
+  (if (right? either)
+      (raw-left (right-objs either))
+      (raw-right (left-objs either))))
 
 ;;;; Predicates
 
