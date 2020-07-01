@@ -267,17 +267,18 @@
 
 (define (maybe-filter pred maybe)
   (assume (procedure? pred))
-  (maybe-bind maybe
-              (lambda objs
-                (let ((res (fast-apply pred objs)))
-                  (if res maybe nothing-obj)))))
+  (assume (maybe? maybe))
+  (if (and (just? maybe) (fast-apply pred (just-objs maybe)))
+      maybe
+      nothing-obj))
 
 (define (maybe-remove pred maybe)
   (assume (procedure? pred))
-  (maybe-bind maybe
-              (lambda objs
-                (let ((res (fast-apply pred objs)))
-                  (if res nothing-obj maybe)))))
+  (assume (maybe? maybe))
+  (if (and (just? maybe)
+           (not (fast-apply pred (just-objs maybe))))
+      maybe
+      nothing-obj))
 
 ;; Traverse a container of Maybes with cmap, collect the payload
 ;; objects with aggregator, and wrap the new collection in a Just.
@@ -302,20 +303,17 @@
 (define (either-filter pred either . default-objs)
   (assume (procedure? pred))
   (assume (either? either))
-  (either-ref either
-              (const (raw-left default-objs))
-              (lambda objs
-                (let ((res (fast-apply pred objs)))
-                  (if res either (raw-left default-objs))))))
+  (if (and (right? either) (fast-apply pred (right-objs either)))
+      either
+      (raw-left default-objs)))
 
 (define (either-remove pred either . default-objs)
   (assume (procedure? pred))
   (assume (either? either))
-  (either-ref either
-              (const (raw-left default-objs))
-              (lambda objs
-                (let ((res (fast-apply pred objs)))
-                  (if res (raw-left default-objs) either)))))
+  (if (and (right? either)
+           (not (fast-apply pred (right-objs either))))
+      either
+      (raw-left default-objs)))
 
 ;; Traverse a container of Eithers with cmap, collect the payload
 ;; objects with aggregator, and wrap the new collection in a Right.
@@ -405,16 +403,22 @@
 ;;; failure and any other value to represent success.
 
 (define (maybe->generation maybe)
-  (maybe-ref maybe
-             (lambda () (eof-object))
-             (lambda objs
-               (assume (singleton? objs)
-                       "maybe->generation: invalid payload")
-               (car objs))))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      (eof-object)
+      (begin
+       (assume (singleton? (just-objs maybe))
+               "maybe->generation: invalid payload")
+       (car (just-objs maybe)))))
 
 (define (either->generation either)
   (assume (either? either))
-  (either-ref/default either (eof-object)))
+  (if (left? either)
+      (eof-object)
+      (begin
+       (assume (singleton? (right-objs either))
+               "either->generation: invalid payload")
+       (car (right-objs either)))))
 
 (define (generation->maybe obj)
   (if (eof-object? obj) nothing-obj (just obj)))
@@ -437,23 +441,23 @@
 ;;; failure and |<any object>, #t| to represent success.
 
 (define (maybe->two-values maybe)
-  (maybe-ref maybe
-             (lambda () (values #f #f))
-             (lambda objs
-               (assume (singleton? objs)
-                       "maybe->two-values: invalid payload")
-               (values (car objs) #t))))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      (values #f #f)
+      (begin
+       (assume (singleton? (just-objs maybe))
+               "maybe->two-values: invalid payload")
+       (values (car (just-objs maybe)) #t))))
 
 (define (two-values->maybe producer)
+  (assume (procedure? producer))
   (call-with-values
    producer
-   (lambda objs
-     (assume (= (length objs) 2)
-             "two-values->maybe: wrong number of values")
-     (if (cadr objs) (just (car objs)) nothing-obj))))
+   (lambda (obj success)
+     (if success (just obj) nothing-obj))))
 
 (define (either->values either)
-  (either-ref either (const (values)) values))
+  (either-ref/default either))
 
 (define (values->either producer . default-objs)
   (assume (procedure? producer))
