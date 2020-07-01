@@ -666,7 +666,8 @@
 (define-syntax maybe-let*
   (syntax-rules ()
     ((_ ()) (just unspecified))
-    ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
+    ((_ () expr1 expr2 ...)
+     (%guard-value maybe? (begin expr1 expr2 ...)))
     ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
     ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
     ((_ (id)) (begin (assume (maybe? id)) id))
@@ -675,9 +676,13 @@
                  (lambda (id)
                    (maybe-let* claws . body))))
     ((_ ((maybe-expr) . claws) . body)
-     (maybe-and maybe-expr (maybe-let* claws . body)))
+     (let ((maybe maybe-expr))
+       (assume (maybe? maybe))
+       (if (just? maybe) (maybe-let* claws . body) nothing-obj)))
     ((_ (id . claws) . body)
-     (maybe-and id (maybe-let* claws . body)))
+     (begin
+      (assume (maybe? id))
+      (if (just? id) (maybe-let* claws . body) nothing-obj)))
     ((_ . _)
      (syntax-error "ill-formed maybe-let* form"))))
 
@@ -716,7 +721,8 @@
 (define-syntax either-let*
   (syntax-rules ()
     ((_ ()) (right unspecified))
-    ((_ () expr expr* ...) (begin expr expr* ...))
+    ((_ () expr expr* ...)
+     (%guard-value either? (begin expr expr* ...)))
     ((_ ((_ either-expr))) (%guard-value either? either-expr))
     ((_ ((either-expr))) (%guard-value either? either-expr))
     ((_ (id)) (begin (assume (either? id)) id))
@@ -725,9 +731,13 @@
                   (lambda (id)
                     (either-let* claws . body))))
     ((_ ((either-expr) . claws) . body)
-     (either-and either-expr (either-let* claws . body)))
+     (let ((either either-expr))
+       (assume (either? either))
+       (if (right? either) (either-let* claws . body) either)))
     ((_ (id . claws) . body)
-     (either-and id (either-let* claws . body)))
+     (begin
+      (assume (either? id))
+      (if (right? id) (either-let* claws . body) id)))
     ((_ . _)
      (syntax-error "ill-formed either-let* form"))))
 
