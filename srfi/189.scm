@@ -93,10 +93,16 @@
   (raw-left (list-copy lis)))
 
 (define (maybe->either maybe . default-objs)
-  (maybe-ref maybe (lambda () (raw-left default-objs)) right))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      (raw-left default-objs)
+      (raw-right (just-objs maybe))))
 
 (define (either->maybe either)
-  (either-ref either (const nothing-obj) just))
+  (assume (either? either))
+  (if (left? either)
+      nothing-obj
+      (raw-just (right-objs either))))
 
 (define (either-swap either)
   (assume (either? either))
@@ -185,12 +191,13 @@
 
 ;; If maybe is a Just containing a single Maybe, return that Maybe.
 (define (maybe-join maybe)
-  (maybe-ref maybe
-             nothing
-             (lambda objs
-               (assume (and (singleton? objs) (maybe? (car objs)))
-                       "maybe-join: invalid payload")
-               (car objs))))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      nothing-obj
+      (let ((objs (just-objs maybe)))
+        (assume (and (singleton? objs) (maybe? (car objs)))
+                "maybe-join: invalid payload")
+        (car objs))))
 
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
@@ -219,12 +226,13 @@
 
 ;; If either is a Right containing a single Either, return that Either.
 (define (either-join either)
-  (either-ref either
-              (const either)
-              (lambda objs
-                (assume (and (singleton? objs) (either? (car objs)))
-                        "either-join: invalid payload")
-                (car objs))))
+  (assume (either? either))
+  (if (left? either)
+      either
+      (let ((objs (right-objs either)))
+        (assume (and (singleton? objs) (either? (car objs)))
+                "either-join: invalid payload")
+        (car objs))))
 
 (define (either-bind either mproc . mprocs)
   (assume (either? either))
@@ -324,8 +332,6 @@
                       (either-ref e (const (return e)) aggregator))
                     container)))))))
 
-;;;; Conversion
-
 ;;;; Protocol conversion
 
 (define (maybe->list maybe)
@@ -348,19 +354,23 @@
 
 ;; If maybe is a Just, return its payload; otherwise, return false.
 (define (maybe->truth maybe)
-  (maybe-ref maybe
-             (lambda () #f)
-             (lambda objs
-               (assume (singleton? objs) "maybe->truth: invalid payload")
-               (car objs))))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      #f
+      (begin
+       (assume (singleton? (just-objs maybe))
+               "maybe->truth: invalid payload")
+       (car (just-objs maybe)))))
 
 ;; If either is a Right, return its payload; otherwise, return false.
 (define (either->truth either)
-  (either-ref either
-              (const #f)
-              (lambda objs
-                (assume (singleton? objs) "either->truth: invalid payload")
-                (car objs))))
+  (assume (either? either))
+  (if (left? either)
+      #f
+      (begin
+       (assume (singleton? (right-objs either))
+               "either->truth: invalid payload")
+       (car (right-objs either)))))
 
 (define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
