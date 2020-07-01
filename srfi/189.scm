@@ -470,9 +470,11 @@
 
 (define (maybe-map proc maybe)
   (assume (procedure? proc))
-  (maybe-bind maybe (lambda objs
-                      (call-with-values (lambda () (fast-apply proc objs))
-                                        just))))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      nothing-obj
+      (call-with-values (lambda () (fast-apply proc (just-objs maybe)))
+                        just)))
 
 (define (maybe-for-each proc maybe)
   (assume (procedure? proc))
@@ -481,12 +483,13 @@
 
 (define (maybe-fold kons nil maybe)
   (assume (procedure? kons))
-  (maybe-ref maybe
-             (lambda () nil)
-             (lambda objs  ; apply kons to all payload values plus nil
-               (if (singleton? objs)
-                   (kons (car objs) nil)
-                   (apply kons (append objs (list nil)))))))
+  (assume (maybe? maybe))
+  (if (nothing? maybe)
+      nil
+      (let ((objs (just-objs maybe)))
+        (if (singleton? objs)
+            (kons (car objs) nil)
+            (apply kons (append objs (list nil)))))))
 
 (define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
@@ -508,9 +511,11 @@
 
 (define (either-map proc either)
   (assume (procedure? proc))
-  (either-bind either (lambda objs
-                        (call-with-values (lambda () (fast-apply proc objs))
-                                          right))))
+  (assume (either? either))
+  (if (left? either)
+      either
+      (call-with-values (lambda () (fast-apply proc (right-objs either)))
+                        right)))
 
 (define (either-for-each proc either)
   (assume (procedure? proc))
@@ -519,12 +524,13 @@
 
 (define (either-fold kons nil either)
   (assume (procedure? kons))
-  (either-ref either
-              (const nil)
-              (lambda objs  ; apply kons to all payload values plus nil
-                (if (singleton? objs)
-                    (kons (car objs) nil)
-                    (apply kons (append objs (list nil)))))))
+  (assume (either? either))
+  (if (left? either)
+      nil
+      (let ((objs (right-objs either)))
+        (if (singleton? objs)
+            (kons (car objs) nil)
+            (apply kons (append objs (list nil)))))))
 
 (define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
