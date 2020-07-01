@@ -68,7 +68,7 @@
      (if (singleton? vals) (car vals) (apply values vals)))))
 
 (define unspecified (if #f #f))
-
+
 ;;;; Constructors
 
 (define (just . objs)
@@ -79,6 +79,12 @@
 
 (define (right . objs)
   (raw-right objs))
+
+;;; List -> <container> equivalents of the basic constructors.
+
+;;; Here and elsewhere, we copy caller-provided list arguments when
+;;; passing them to raw-just/left/right, so that later mutation of the
+;;; list argument doesn't affect the payloads of any Maybes/Eithers.
 
 (define (list->just lis)
   (assume (or (null? lis) (pair? lis)))
@@ -106,7 +112,7 @@
 
 (define (either-swap either)
   (assume (either? either))
-  (either-ref either right left))
+  (either-ref either right left))  ; TODO: optimize me!
 
 ;;;; Predicates
 
@@ -116,8 +122,9 @@
 (define (nothing? obj)
   (eqv? obj nothing-obj))
 
-;; True if all maybes are Nothing, or if all are Justs whose payloads
-;; are equal in the sense of equal.
+;; True if all the maybes are Nothing, or if all are Justs containing
+;; the same number of values which are element-wise equal in the sense
+;; of `equal'.
 (define (maybe= equal . maybes)
   (assume (procedure? equal))
   (assume (pair? maybes))
@@ -125,6 +132,7 @@
     (every (lambda (maybe2) (%maybe=2 equal maybe1 maybe2))
            (cdr maybes))))
 
+;; Compare two Maybes.
 (define (%maybe=2 equal maybe1 maybe2)
   (or (eqv? maybe1 maybe2)  ; Also handles the Nothing = Nothing case.
       (and (just? maybe1)
@@ -134,8 +142,8 @@
 (define (either? obj)
   (or (left? obj) (right? obj)))
 
-;; True if all eithers are all Lefts or all Rights and their payloads
-;; are equal in the sense of equal.
+;; True if the eithers are all Lefts/all Rights containing the same
+;; number of values which are element-wise equal in the sense of `equal'.
 (define (either= equal . eithers)
   (assume (procedure? equal))
   (assume (pair? eithers))
@@ -143,14 +151,18 @@
     (every (lambda (either2) (%either=2 equal either1 either2))
            (cdr eithers))))
 
+;; Compare two Eithers.
 (define (%either=2 equal either1 either2)
   (let ((e= (lambda (acc) (list= equal (acc either1) (acc either2)))))
     (or (eqv? either1 either2)
         (and (left? either1) (left? either2) (e= left-objs))
         (and (right? either1) (right? either2) (e= right-objs)))))
-
+
 ;;;; Accessors
 
+;; Unwrap a Maybe.  If it's a Just, call the optional success
+;; continuation (default: values) on its payload; otherwise,
+;; call failure.
 (define (maybe-ref maybe failure . %opt-args)
   (assume (maybe? maybe))
   (assume (procedure? failure))
@@ -160,17 +172,20 @@
         (fast-apply success objs))
       (failure)))
 
-(define (maybe-ref/default maybe . defaults)
+;; Unwrap a Maybe.  If it's a Nothing, return the default objects.
+(define (maybe-ref/default maybe . default-objs)
   (assume (maybe? maybe))
   (if (just? maybe)
       (let ((objs (just-objs maybe)))
         (fast-list->values objs))
-      (fast-list->values defaults)))
-
+      (fast-list->values default-objs)))
+
 (define (%either-ref-single either accessor cont)
   (let ((objs (accessor either)))
     (fast-apply cont objs)))
 
+;; Unwrap an Either, calling failure on the payload of a Left and the
+;; optional success continuation (default: values) on that of a Right.
 (define (either-ref either failure . %opt-args)
   (assume (either? either))
   (assume (procedure? failure))
@@ -180,13 +195,14 @@
                                                 values))
       (%either-ref-single either left-objs failure)))
 
-(define (either-ref/default either . defaults)
+;; Unwrap an Either.  If it's a Left, return the default objects.
+(define (either-ref/default either . default-objs)
   (assume (either? either))
   (if (right? either)
       (let ((objs (right-objs either)))
         (fast-list->values objs))
-      (fast-list->values defaults)))
-
+      (fast-list->values default-objs)))
+
 ;;;; Join and bind
 
 ;; If maybe is a Just containing a single Maybe, return that Maybe.
@@ -199,6 +215,9 @@
                 "maybe-join: invalid payload")
         (car objs))))
 
+;; Call the first mproc on the payload of a Maybe, producing a Maybe.
+;; Repeat the operation with this Maybe and the remaining mprocs.
+;; Return a Nothing immediately.
 (define (maybe-bind maybe mproc . mprocs)
   (assume (maybe? maybe))
   (if (null? mprocs)
@@ -212,13 +231,14 @@
                          (lp (fast-apply mp objs)
                              (car mprocs)
                              (cdr mprocs))))))))
-
+
+;; Compose the argument mprocs and return the resulting monadic procedure.
 (define (maybe-compose . mprocs)
   (assume (pair? mprocs))
   (lambda args
     (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
       (if (null? rest)
-          (fast-apply mproc args)
+          (fast-apply mproc args)             ; tail-call last
           (maybe-ref (fast-apply mproc args)
                      nothing
                      (lambda objs
@@ -234,6 +254,9 @@
                 "either-join: invalid payload")
         (car objs))))
 
+;; Call the first mproc on the payload of a Either, producing a Either.
+;; Repeat the operation with this Either and the remaining mprocs.
+;; Return a Left immediately.
 (define (either-bind either mproc . mprocs)
   (assume (either? either))
   (if (null? mprocs)
@@ -248,12 +271,13 @@
                               (car mprocs)
                               (cdr mprocs))))))))
 
+;; Compose the argument mprocs and return the resulting monadic procedure.
 (define (either-compose . mprocs)
   (assume (pair? mprocs))
   (lambda args
     (let lp ((args args) (mproc (car mprocs)) (rest (cdr mprocs)))
       (if (null? rest)
-          (fast-apply mproc args)
+          (fast-apply mproc args)              ; tail-call last
           (either-ref (fast-apply mproc args)
                       left
                       (lambda objs
@@ -265,6 +289,7 @@
   (assume (maybe? maybe))
   (if (just? maybe) 1 0))
 
+;; Return maybe if its payload satisfies pred; otherwise, return Nothing.
 (define (maybe-filter pred maybe)
   (assume (procedure? pred))
   (assume (maybe? maybe))
@@ -272,6 +297,8 @@
       maybe
       nothing-obj))
 
+;; Return maybe if its payload doesn't satisfy pred; otherwise, return
+;; Nothing.
 (define (maybe-remove pred maybe)
   (assume (procedure? pred))
   (assume (maybe? maybe))
@@ -300,6 +327,8 @@
   (assume (either? either))
   (if (right? either) 1 0))
 
+;; Return either if its payload satisfies pred; otherwise, return
+;; a Left of the default objects.
 (define (either-filter pred either . default-objs)
   (assume (procedure? pred))
   (assume (either? either))
@@ -314,7 +343,7 @@
            (not (fast-apply pred (right-objs either))))
       either
       (raw-left default-objs)))
-
+
 ;; Traverse a container of Eithers with cmap, collect the payload
 ;; objects with aggregator, and wrap the new collection in a Right.
 ;; If a Left is encountered while traversing, return it immediately.
@@ -329,7 +358,7 @@
        (right (cmap (lambda (e)
                       (either-ref e (const (return e)) aggregator))
                     container)))))))
-
+
 ;;;; Protocol conversion
 
 (define (maybe->list maybe)
@@ -369,12 +398,16 @@
        (assume (singleton? (right-objs either))
                "either->truth: invalid payload")
        (car (right-objs either)))))
-
+
 (define (truth->maybe obj)
   (if obj (just obj) nothing-obj))
 
 (define (truth->either obj . default-objs)
   (if obj (right obj) (raw-left default-objs)))
+
+;;; These procedures interface between the Maybe protocol and the
+;;; list-truth protocol, which uses #f to represent failure and a
+;;; list to represent success.
 
 (define (maybe->list-truth maybe)
   (assume (maybe? maybe))
@@ -384,6 +417,8 @@
   (assume (either? either))
   (if (right? either) (right-objs either) #f))
 
+;; If list-or-false is #f, return Nothing.  If it's a list, return a
+;; Just containing its elements.
 (define (list-truth->maybe list-or-false)
   (if list-or-false
       (begin
@@ -391,6 +426,8 @@
        (raw-just (list-copy list-or-false)))
       nothing-obj))
 
+;; If list-or-false is #f, return a Left of the default objects.
+;; If it's a list, return a Right containing its elements.
 (define (list-truth->either list-or-false . default-objs)
   (if list-or-false
       (begin
@@ -402,6 +439,8 @@
 ;;; the generation protocol, which uses an EOF object to represent
 ;;; failure and any other value to represent success.
 
+;; If maybe is a Just whose payload is a single value, return that
+;; value.  If it's a Nothing, return an eof-object.
 (define (maybe->generation maybe)
   (assume (maybe? maybe))
   (if (nothing? maybe)
@@ -411,6 +450,8 @@
                "maybe->generation: invalid payload")
        (car (just-objs maybe)))))
 
+;; If either is a Right whose payload is a single value, return that
+;; value.  If it's a Left, return an eof-object.
 (define (either->generation either)
   (assume (either? either))
   (if (left? either)
@@ -426,6 +467,10 @@
 (define (generation->either obj . default-objs)
   (if (eof-object? obj) (raw-left default-objs) (right obj)))
 
+;;; These procedures interface between the Maybe/Either protocols and
+;;; the values protocol, which returns one or more values to represent
+;;; success and zero values to represent failure.
+
 (define (maybe->values maybe)
   (maybe-ref maybe values values))
 
@@ -435,11 +480,13 @@
    producer
    (lambda objs
      (if (null? objs) nothing-obj (raw-just objs)))))
-
+
 ;;; The following procedures interface between the Maybe protocol and
 ;;; the two-values protocol, which returns |#f, #f| to represent
 ;;; failure and |<any object>, #t| to represent success.
 
+;; If maybe is Just containing a single value, return that value and #t.
+;; If it's a Nothing, return |#f, #f|.
 (define (maybe->two-values maybe)
   (assume (maybe? maybe))
   (if (nothing? maybe)
@@ -465,9 +512,11 @@
    producer
    (lambda objs
      (if (null? objs) (raw-left default-objs) (raw-right objs)))))
-
+
 ;;;; Map, fold, and unfold
 
+;; If maybe is a Just, apply proc to its payload and wrap the result
+;; in a Just.  Otherwise, return Nothing.
 (define (maybe-map proc maybe)
   (assume (procedure? proc))
   (assume (maybe? maybe))
@@ -481,6 +530,8 @@
   (maybe-ref maybe (const #f) proc)
   unspecified)
 
+;; If maybe is a Just, apply kons to its payload values and nil.
+;; Otherwise, return nil.
 (define (maybe-fold kons nil maybe)
   (assume (procedure? kons))
   (assume (maybe? maybe))
@@ -490,7 +541,10 @@
         (if (singleton? objs)
             (kons (car objs) nil)
             (apply kons (append objs (list nil)))))))
-
+
+;; If the seeds satisfy stop?, return Nothing.  Otherwise, call
+;; successor on seeds and apply stop? to the results; if stop? returns
+;; true, apply mapper to seeds and return the results wrapped in a Just.
 (define (maybe-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
@@ -509,6 +563,8 @@
                                      stop?))
            (call-with-values (lambda () (apply mapper seeds)) just)))))
 
+;; If either is a Right, apply proc to its payload and wrap the result
+;; in a Right.  Otherwise, return either.
 (define (either-map proc either)
   (assume (procedure? proc))
   (assume (either? either))
@@ -522,6 +578,8 @@
   (either-ref either (const #f) proc)
   unspecified)
 
+;; If either is a Right, apply kons to its payload values and nil.
+;; Otherwise, return nil.
 (define (either-fold kons nil either)
   (assume (procedure? kons))
   (assume (either? either))
@@ -532,6 +590,9 @@
             (kons (car objs) nil)
             (apply kons (append objs (list nil)))))))
 
+;; If the seeds satisfy stop?, return a Left of seeds.  Otherwise, call
+;; successor on seeds and apply stop? to the results; if stop? returns
+;; true, apply mapper to seeds and return the results wrapped in a Right.
 (define (either-unfold stop? mapper successor . seeds)
   (assume (procedure? stop?))
   (assume (procedure? mapper))
@@ -552,6 +613,7 @@
 
 ;;;; Syntax
 
+;; Maybe analog of if.
 (define-syntax maybe-if
   (syntax-rules ()
     ((_ maybe-expr just-expr nothing-expr)
@@ -559,102 +621,130 @@
        (assume (maybe? mval))
        (if (just? mval) just-expr nothing-expr)))))
 
+;; Maybe analog of and.  Evaluate the argument expressions in order.
+;; If any expression evaluates to Nothing, return it.  Otherwise,
+;; return the last Just.
 (define-syntax maybe-and
   (syntax-rules ()
     ((_) (just unspecified))
-    ((_ expr)
-     (let ((maybe expr))
+    ((_ maybe-expr)
+     (let ((maybe maybe-expr))
        (assume (maybe? maybe))
        maybe))
-    ((_ expr1 expr2 ...)
-     (let ((maybe expr1))
+    ((_ maybe-expr maybe-expr* ...)
+     (let ((maybe maybe-expr))
        (assume (maybe? maybe))
-       (if (just? maybe) (maybe-and expr2 ...) nothing-obj)))))
+       (if (just? maybe)
+           (maybe-and maybe-expr* ...)
+           nothing-obj)))))
 
+;; Maybe analog of or.  Evaluate the argument expressions in order.
+;; If any expression evaluates to a Just, return it immediately.
+;; Otherwise, return Nothing.
 (define-syntax maybe-or
   (syntax-rules ()
     ((_) (nothing))
-    ((_ expr)
-     (let ((maybe expr))
+    ((_ maybe-expr)
+     (let ((maybe maybe-expr))
        (assume (maybe? maybe))
        maybe))
-    ((_ expr1 expr2 ...)
-     (let ((maybe expr1))
+    ((_ maybe-expr maybe-expr* ...)
+     (let ((maybe maybe-expr))
        (assume (maybe? maybe))
-       (if (just? maybe) maybe (maybe-or expr2 ...))))))
+       (if (just? maybe)
+           maybe
+           (maybe-or maybe-expr* ...))))))
 
+;; Maybe analog of SRFI 2's and-let*.  Each claw evaluates an expression
+;; or bound variable to a Maybe, or binds the payload of the value of a
+;; Maybe expression to a name in later claws and the body.  If any claw
+;; gives a Nothing, the whole expression evaluates to Nothing.
 (define-syntax maybe-let*
   (syntax-rules ()
     ((_ ()) (just unspecified))
     ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
-    ((_ ((_ expr)))
-     (let ((maybe expr))
+    ((_ ((_ maybe-expr)))
+     (let ((maybe maybe-expr))
        (assume (maybe? maybe))
        maybe))
-    ((_ ((expr)))
-     (let ((maybe expr))
+    ((_ ((maybe-expr)))
+     (let ((maybe maybe-expr))
        (assume (maybe? maybe))
        maybe))
     ((_ (id)) (begin (assume (maybe? id)) id))
-    ((_ ((id expr) . claws) . body)
-     (maybe-bind expr
+    ((_ ((id maybe-expr) . claws) . body)
+     (maybe-bind maybe-expr
                  (lambda (id)
                    (maybe-let* claws . body))))
-    ((_ ((expr) . claws) . body)
-     (maybe-and expr (maybe-let* claws . body)))
+    ((_ ((maybe-expr) . claws) . body)
+     (maybe-and maybe-expr (maybe-let* claws . body)))
     ((_ (id . claws) . body)
      (maybe-and id (maybe-let* claws . body)))
     ((_ . _)
      (syntax-error "ill-formed maybe-let* form"))))
 
+;; Either analog of and.  Evaluate the argument expressions in order.
+;; If any expression evaluates to a Left, return it immediately.
+;; Otherwise, return the last Right.
 (define-syntax either-and
   (syntax-rules ()
     ((_) (right unspecified))
-    ((_ expr)
-     (let ((either expr))
+    ((_ either-expr)
+     (let ((either either-expr))
        (assume (either? either))
        either))
-    ((_ expr1 expr2 ...)
-     (let ((either expr1))
+    ((_ either-expr either-expr* ...)
+     (let ((either either-expr))
        (assume (either? either))
-       (if (right? either) (either-and expr2 ...) either)))))
-
+       (if (right? either)
+           (either-and either-expr* ...)
+           either)))))
+
+;; Either analog of or.  Evaluate the argument expressions in order.
+;; If any expression evaluates to a Right, return it immediately.
+;; Otherwise, return the last Left.
 (define-syntax either-or
   (syntax-rules ()
     ((_) (left unspecified))
-    ((_ expr)
-     (let ((either expr))
+    ((_ either-expr)
+     (let ((either either-expr))
        (assume (either? either))
        either))
-    ((_ expr1 expr2 ...)
-     (let ((either expr1))
+    ((_ either-expr either-expr* ...)
+     (let ((either either-expr))
        (assume (either? either))
-       (if (right? either) either (either-or expr2 ...))))))
+       (if (right? either)
+           either
+           (either-or either-expr* ...))))))
 
+;; Either analog of SRFI 2's and-let*.  Each claw evaluates an expression
+;; or bound variable to a Maybe, or binds the payload of the value of an
+;; Either expression to a name in later claws and the body.  If any claw
+;; gives a Left, then the whole expression evaluates to that Left.
 (define-syntax either-let*
   (syntax-rules ()
     ((_ ()) (right unspecified))
-    ((_ () expr1 expr2 ...) (begin expr1 expr2 ...))
-    ((_ ((_ expr)))
-     (let ((either expr))
+    ((_ () expr expr* ...) (begin expr expr* ...))
+    ((_ ((_ either-expr)))
+     (let ((either either-expr))
        (assume (either? either))
        either))
-    ((_ ((expr)))
-     (let ((either expr))
+    ((_ ((either-expr)))
+     (let ((either either-expr))
        (assume (either? either))
        either))
     ((_ (id)) (begin (assume (either? id)) id))
-    ((_ ((id expr) . claws) . body)
-     (either-bind expr
-                 (lambda (id)
-                   (either-let* claws . body))))
-    ((_ ((expr) . claws) . body)
-     (either-and expr (either-let* claws . body)))
+    ((_ ((id either-expr) . claws) . body)
+     (either-bind either-expr
+                  (lambda (id)
+                    (either-let* claws . body))))
+    ((_ ((either-expr) . claws) . body)
+     (either-and either-expr (either-let* claws . body)))
     ((_ (id . claws) . body)
      (either-and id (either-let* claws . body)))
     ((_ . _)
      (syntax-error "ill-formed either-let* form"))))
-
+
 ;;;; Trivalent logic
 
 ;;; In the following procedures, (just #f) is considered to be false.
@@ -670,16 +760,16 @@
 ;; is Nothing or if any two arguments have different (tri-)truth values,
 ;; #f is returned.
 (define (tri=? maybe . ms)
-  (define (make-pred b)
-    (lambda (m)
-      (assume (maybe? m))
-      (and (just? m) (eqv? (just->boolean m) b))))
+  (let ((make-pred
+         (lambda (b)
+           (lambda (m)
+             (assume (maybe? m))
+             (and (just? m) (eqv? (just->boolean m) b))))))
+    (if (nothing? maybe)
+        (just #f)
+        (let ((tri-same? (make-pred (just->boolean maybe))))
+          (if (every tri-same? ms) (just #t) (just #f))))))
 
-  (if (nothing? maybe)
-      (just #f)
-      (let ((tri-same? (make-pred (just->boolean maybe))))
-        (if (every tri-same? ms) (just #t) (just #f)))))
-
 ;; Returns #t if all arguments are true.  If any argument is false or
 ;; Nothing, return the first such object.
 (define (tri-and . maybes)
