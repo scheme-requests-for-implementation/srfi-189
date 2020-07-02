@@ -50,12 +50,14 @@
           generation->maybe list->left list->maybe list->either
           maybe->list-truth either->list-truth list-truth->maybe
           list-truth->either truth->either
+          either->generation generation->either
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
           either-unfold
 
           tri-not tri=? tri-and tri-or tri-merge
 
+          maybe-and maybe-or maybe-let* either-and either-or either-let*
           maybe-if)
 
   (include "189.scm"))
