@@ -197,7 +197,7 @@ number of values wrapped in the Just/Right produced by its predecessor.</p>
 <code>(either-bind</code> <em>either mproc1 mproc2</em> ...<code>)</code>  </p>
 <p>Monadic bind.  If <em>maybe/either</em> is a Just/Right,
 it behaves as if <code>maybe-compose/either-compose</code>
-were applied to <em>procs</em>, and the resulting mproc
+were applied to <em>mprocs</em>, and the resulting mproc
 applied to the payload of <em>maybe/either</em>.
 But if <em>maybe/either</em> is a Nothing/Left, it
 is immediately returned.</p>
