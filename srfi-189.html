@@ -365,7 +365,8 @@ Otherwise, <em>successor</em> is applied to <em>seeds</em>.
 If <em>stop?</em> returns false on the results
 of <em>successor</em>, it is an error.
 But if the second call to <em>stop?</em> returns true,
-the results of <em>mapper</em> are wrapped in a Just/Right and returned.
+<em>mapper</em> is applied to <em>seeds</em>
+and the results are wrapped in a Just/Right and returned.
 <h3 id="conditional">Conditional syntax</h3>
 <p><code>(maybe-if</code> <em>maybe-expr just-expr nothing-expr</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 Equivalent to <code>(if (just? </code><em>maybe-expr</em><code>) </code><em>just-expr nothing-expr</em><code>)</code>,
