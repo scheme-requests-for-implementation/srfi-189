@@ -378,7 +378,7 @@ If an <em>expr</em> evaluates to a Nothing / Left, it is returned
 without evaluating any more expressions.
 Otherwise, the last Just / Right is returned.
 If there are no <em>exprs</em>,
-then Nothing / a Left of an unspecified value is returned.
+then a Just/Right of an unspecified value is returned.
 If an <em>expr</em> does not evaluate to a Maybe/Either, an error is signaled.
 <p><code>(maybe-or</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-or</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]</p>
@@ -387,7 +387,7 @@ If an <em>expr</em> evaluates to a Just/Right, it is returned
 without evaluating any more expressions.
 Otherwise, the last Nothing/Left is returned.
 If there are no <em>exprs</em>,
-then a Just/Right of an unspecified value is returned.
+then Nothing / a Left of an unspecified value is returned.
 If an <em>expr</em> does not evaluate to a Maybe/Either, an error is signaled.
 <p><code>(maybe-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
