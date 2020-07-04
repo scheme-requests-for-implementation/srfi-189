@@ -393,12 +393,39 @@ If an <em>expr</em> does not evaluate to a Maybe/Either, an error is signaled.
 <code>(either-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 The Maybe/Either equivalent of <code>and-let*</code> from
 <a href="http://srfi.schemers.org/srfi-2/srfi-2.html">SRFI 2</a>.
-However, instead of testing whether a claw is true or false,
+However, instead of testing whether a <em>claw</em> is true or false,
 it tests whether it is Just/Right or Nothing/Left.
-A <em>claw</em> with a variable binds the variable to the unwrapped
-Just/Right, but the result of the whole expression is
-always a Maybe/Either.
 If a <em>claw</em> does not evaluate to a Maybe/Either, an error is signaled.
+The same is true if a <em>claw</em> evaluates to a Just or Right
+that wraps zero values or more than one value.</p>
+<p>A <em>claw</em> is either a list of length 1, in which case it is an expression,
+or a list of length 2, in which case it is a variable and an expression.
+In either case, the value of the <em>claw</em> is the value of the expression.
+If the value of a <em>claw</em> is Nothing / a Left, the expression immediately
+returns that value.
+But if the value of a <em>claw</em> is a Just/Right,
+then the variable (if any) is bound to its unwrapped value;
+the scope of this binding is any remaining <em>claws</em>
+and the <em>body</em>.
+<p>If the values of all the <em>claws</em> are Just/Right, then
+the <em>body</em> is evaluated
+as if it were in a <code>(let () ...)</code>,
+and its value is wrapped in a Just/Right and returned.</p>
+<p><code>(maybe-let*-values (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
+<code>(either-let*-values (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
+<p>The same as <code>maybe/either-let*</code>,
+except that the first element of a two-element claw
+is a &lt;formals&gt; from <code>lambda</code>,
+and the variables mentioned in it (if any)
+are bound to the values that result from unpacking a Just/Right.
+Note that a claw with a single variable in
+<code>maybe/either-let*</code> is bound to
+the sole value contained in the Just/Right,
+whereas in <code>maybe/either-let*-values</code>,
+it is bound to a list of all the values, just as
+in a <code>lambda</code> expression,
+a &lt;formals&gt; consisting of a single variable
+is bound to a list of all the procedure arguments.</p>
 <h3 id="trivalent-logic">Trivalent logic</h3>
 <p>These procedures provide trivalent logic in the style of SQL on
 Maybe objects containing a single value.  For the purposes of this section,
