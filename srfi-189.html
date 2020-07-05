@@ -398,7 +398,8 @@ it tests whether it is Just/Right or Nothing/Left.
 If a <em>claw</em> does not evaluate to a Maybe/Either, an error is signaled.
 The same is true if a <em>claw</em> evaluates to a Just or Right
 that wraps zero values or more than one value.</p>
-<p>A <em>claw</em> is either a list of length 1, in which case it is an expression,
+<p>A <em>claw</em> is either an identifier
+or a list of length 1, in which case it is an expression,
 or a list of length 2, in which case it is a variable and an expression.
 In either case, the value of the <em>claw</em> is the value of the expression.
 If the value of a <em>claw</em> is Nothing / a Left, the expression immediately
