@@ -686,6 +686,36 @@
     ((_ . _)
      (syntax-error "ill-formed maybe-let* form"))))
 
+;; Like maybe-let*, but a claw of the form (<formals> <maybe-expr>)
+;; binds the payload of the value of <maybe-expr> to <formals> in the
+;; manner of let-values.
+(define-syntax maybe-let*-values
+  (syntax-rules ()
+    ((_ ()) (just unspecified))
+    ((_ () expr1 expr2 ...)
+     (%guard-value maybe? (begin expr1 expr2 ...)))
+    ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
+    ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
+    ((_ (id)) (begin (assume (maybe? id)) id))
+    ((_ (((id id* ...) maybe-expr) . claws) . body)
+     (maybe-bind maybe-expr
+                 (lambda (id id* ...)
+                   (maybe-let*-values claws . body))))
+    ((_ ((ids maybe-expr) . claws) . body)
+     (maybe-bind maybe-expr
+                 (lambda ids
+                   (maybe-let*-values claws . body))))
+    ((_ ((maybe-expr) . claws) . body)
+     (let ((maybe maybe-expr))
+       (assume (maybe? maybe))
+       (if (just? maybe) (maybe-let*-values claws . body) nothing-obj)))
+    ((_ (id . claws) . body)
+     (begin
+      (assume (maybe? id))
+      (if (just? id) (maybe-let*-values claws . body) nothing-obj)))
+    ((_ . _)
+     (syntax-error "ill-formed maybe-let*-values form"))))
+
 ;; Either analog of and.  Evaluate the argument expressions in order.
 ;; If any expression evaluates to a Left, return it immediately.
 ;; Otherwise, return the last Right.
@@ -740,6 +770,37 @@
       (if (right? id) (either-let* claws . body) id)))
     ((_ . _)
      (syntax-error "ill-formed either-let* form"))))
+
+;; Like either-let*, but a claw of the form (<formals> <either-expr>)
+;; binds the payload of the value of <either-expr> to <formals> in the
+;; manner of let-values.
+(define-syntax either-let*-values
+  (syntax-rules ()
+    ((_ ()) (right unspecified))
+    ((_ () expr expr* ...)
+     (%guard-value either? (begin expr expr* ...)))
+    ((_ ((_ either-expr))) (%guard-value either? either-expr))
+    ((_ ((either-expr))) (%guard-value either? either-expr))
+    ((_ (id)) (begin (assume (either? id)) id))
+    ((_ (((id id* ...) either-expr) . claws) . body)
+     (either-bind either-expr
+                  (lambda (id id* ...)
+                    (either-let*-values claws . body))))
+    ((_ ((ids either-expr) . claws) . body)
+     (either-bind either-expr
+                  (lambda ids
+                    (either-let*-values claws . body))))
+    ((_ ((either-expr) . claws) . body)
+     (let ((either either-expr))
+       (assume (either? either))
+       (if (right? either) (either-let*-values claws . body) either)))
+    ((_ (id . claws) . body)
+     (begin
+      (assume (either? id))
+      (if (right? id) (either-let*-values claws . body) id)))
+    ((_ . _)
+     (syntax-error "ill-formed either-let*-values form"))))
+
 
 ;;;; Trivalent logic
 

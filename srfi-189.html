@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <title>SRFI 189: Maybe and Either: optional container types</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/srfi.css" type="text/css" />
-    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/srfi.css" type="text/css">
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
   </head>
- 
+
   <body>
- 
-<h2 id="title">Title</h2>
-<p>SRFI 189: Maybe and Either: optional container types</p>
-<h2 id="authors">Authors</h2>
-<p>John Cowan (text), Wolfgang Corcoran-Mathe (sample implementation)</p>
+    <h1 id="title"><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI logo" /></a>189: Maybe and Either: optional container types</h1>
+
+<p id="authors">by John Cowan (text), Wolfgang Corcoran-Mathe (sample implementation)</p>
 
 <h1>Status</h1>
 
@@ -28,6 +26,7 @@
   <li>Draft #5 published: 2020-06-02</li>
   <li>Draft #6 published: 2020-06-05</li>
   <li>Draft #7 published: 2020-06-14</li>
+  <li>Draft #8 published: 2020-07-01</li>
 </ul>
 
 <h2 id="abstract">Abstract</h2>
@@ -183,7 +182,7 @@ In all other cases (including a Just/Right with multiple values) it is an error.
 and similarly for <code>either-join</code>.
 <p><code>(maybe-compose</code> <em>mproc1 mproc2</em> ...<code>)</code><br>
 <code>(either-compose</code> <em>mproc1 mproc2</em> ...<code>)</code>  </p>
-<p>Returns an mproc that accepts zero or more arguments and 
+<p>Returns an mproc that accepts zero or more arguments and
 applies the following iterative algorithm to each <em>mproc</em>:</p>
 <p>The <em>mproc</em> is applied to the arguments and returns a Maybe/Either interim result.
 If the result is Nothing / a Left, it is returned as the final result.
@@ -229,12 +228,12 @@ Typical mappables are lists and vectors, and <code>map</code> and <code>vector-m
 are useful map functions, though not the only possible ones.</p>
 <p>Each element is processed as follows:  If it is a Just/Right, its values are
 unwrapped and the <em>aggregator</em> function (which defaults to <code>list</code>)
-is applied to them.  
+is applied to them.
 But if it is a Left/Nothing, that object is immediately returned as the value of
 <code>maybe-sequence/either-sequence</code>.</p>
 <p>Assuming there are no Lefts/Nothings, the <em>map</em> function is then responsible
-for contructing the new mappable out of the results of the calls on <em>aggregator</em>.</p>
-<p>For example, a list of Justs becomes a Just list of lists if 
+for constructing the new mappable out of the results of the calls on <em>aggregator</em>.</p>
+<p>For example, a list of Justs becomes a Just list of lists if
 the map procedure is <code>map</code> and the aggregator is <code>list</code>.
 In the same way, a vector of Rights containing one value each becomes
 a Right vector if the map procedure is <code>vector-map</code>
@@ -245,7 +244,7 @@ indicates that the procedure converts, sometimes lossily, between
 one type of object and another.  For example, <code>list-&gt;vector</code>
 accepts a list and returns a vector containing the same elements
 (in the sense of <code>eqv?</code>) in the same order.</p>
-<p>In this section, however, <code>-&gt;</code> is used 
+<p>In this section, however, <code>-&gt;</code> is used
 in an extended sense.  As noted in the Rationale,
 the purpose of Maybe and Either is to provide first-class objects
 representing the distinction between success and failure in such a
@@ -271,7 +270,7 @@ if <em>maybe/either</em> is Nothing/Left, returns the empty list.
 It is an error to mutate the result of this procedure.</p>
 <p><code>(list-&gt;maybe</code> <em>list</em><code>)</code><br>
 <code>(list-&gt;either</code> <em>list obj</em> ...<code>)</code></p>
-<p>If <em>list</em> is empty, 
+<p>If <em>list</em> is empty,
 returns Nothing / wraps <em>objs</em> in a Left and returns it;
 otherwise, wraps the list elements in a Just/Right and returns that.</p>
 <p><big>&#9758;</big> The following procedures interface between the Maybe and Either protocols and
