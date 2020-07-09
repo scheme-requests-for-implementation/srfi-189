@@ -196,7 +196,7 @@ number of values wrapped in the Just/Right produced by its predecessor.</p>
 <code>(either-bind</code> <em>either mproc1 mproc2</em> ...<code>)</code>  </p>
 <p>Monadic bind.  If <em>maybe/either</em> is a Just/Right,
 it behaves as if <code>maybe-compose/either-compose</code>
-were applied to <em>procs</em>, and the resulting mproc
+were applied to <em>mprocs</em>, and the resulting mproc
 applied to the payload of <em>maybe/either</em>.
 But if <em>maybe/either</em> is a Nothing/Left, it
 is immediately returned.</p>
@@ -318,7 +318,7 @@ and zero values to represent failure.</em></p>
 <p>If <em>maybe/either</em> is a Just/Right, returns the values of its payload;
 otherwise returns no values.</p>
 <p><code>(values-&gt;maybe</code> <em>producer</em><code>)</code><br>
-<code>(values-&gt;either</code> <em>producer obj</em> ...<code>)</code></p>
+<code>(values-&gt;maybe</code> <em>producer</em><code>)</code></p>
 <p>These procedures invoke <em>producer</em> with no arguments.
 If no values are returned, Nothing / Left of <em>objs</em> is returned.
 Otherwise the values are wrapped in a Just/Right and returned.</p>
@@ -364,11 +364,13 @@ Otherwise, <em>successor</em> is applied to <em>seeds</em>.
 If <em>stop?</em> returns false on the results
 of <em>successor</em>, it is an error.
 But if the second call to <em>stop?</em> returns true,
-the results of <em>mapper</em> are wrapped in a Just/Right and returned.
+<em>mapper</em> is applied to <em>seeds</em>
+and the results are wrapped in a Just/Right and returned.
 <h3 id="conditional">Conditional syntax</h3>
 <p><code>(maybe-if</code> <em>maybe-expr just-expr nothing-expr</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 Equivalent to <code>(if (just? </code><em>maybe-expr</em><code>) </code><em>just-expr nothing-expr</em><code>)</code>,
-except that an error is signaled if <em>maybe-expr</em> does not evaluate to a Maybe.
+except that an error satisfying <code>error-object</code> is signaled
+if <em>maybe-expr</em> does not evaluate to a Maybe.
 <p><code>(maybe-and</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-and</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]</p>
 The <em>exprs</em> are evaluated in order.
@@ -376,8 +378,9 @@ If an <em>expr</em> evaluates to a Nothing / Left, it is returned
 without evaluating any more expressions.
 Otherwise, the last Just / Right is returned.
 If there are no <em>exprs</em>,
-then Nothing / a Left of an unspecified value is returned.
-If an <em>expr</em> does not evaluate to a Maybe/Either, an error is signaled.
+then a Just/Right of an unspecified value is returned.
+If an <em>expr</em> does not evaluate to a Maybe/Either,
+an error satisfying <code>error-object</code> is signaled.
 <p><code>(maybe-or</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-or</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]</p>
 The <em>exprs</em> are evaluated in order.
@@ -385,18 +388,59 @@ If an <em>expr</em> evaluates to a Just/Right, it is returned
 without evaluating any more expressions.
 Otherwise, the last Nothing/Left is returned.
 If there are no <em>exprs</em>,
-then a Just/Right of an unspecified value is returned.
-If an <em>expr</em> does not evaluate to a Maybe/Either, an error is signaled.
+then Nothing / a Left of an unspecified value is returned.
+If an <em>expr</em> does not evaluate to a Maybe/Either,
+an error satisfying <code>error-object</code> is signaled.
 <p><code>(maybe-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 The Maybe/Either equivalent of <code>and-let*</code> from
 <a href="http://srfi.schemers.org/srfi-2/srfi-2.html">SRFI 2</a>.
-However, instead of testing whether a claw is true or false,
+However, instead of testing whether a <em>claw</em> is true or false,
 it tests whether it is Just/Right or Nothing/Left.
-A <em>claw</em> with a variable binds the variable to the unwrapped
-Just/Right, but the result of the whole expression is
-always a Maybe/Either.
-If a <em>claw</em> does not evaluate to a Maybe/Either, an error is signaled.
+If a <em>claw</em> does not evaluate to a Maybe/Either,
+an error satisfying <code>error-object</code> is signaled.
+The same is true if a <em>claw</em> evaluates to a Just or Right
+that wraps zero values or more than one value.</p>
+<p>A <em>claw</em> is either an identifier
+bound by an earlier claw,
+or a list of length 1, in which case it is an expression,
+or a list of length 2, in which case it is a variable and an expression.
+In either case, the value of the <em>claw</em> is the value of the
+bound variable or expression.
+If the value of a <em>claw</em> is Nothing / a Left, the expression immediately
+returns that value.
+But if the value of a <em>claw</em> is a Just/Right,
+then the variable (if any) is bound to its unwrapped value;
+the scope of this binding is any remaining <em>claws</em>
+and the <em>body</em>.
+<p>If the values of all the <em>claws</em> are Just/Right, then
+the <em>body</em> is evaluated
+as if it were in a <code>(let () ...)</code>,
+and its value is wrapped in a Just/Right and returned.</p>
+<p><code>(maybe-let*-values (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
+<code>(either-let*-values (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
+<p>The same as <code>maybe/either-let*</code>,
+except that the first element of a two-element claw
+is a &lt;formals&gt; from <code>lambda</code>,
+and the variables mentioned in it (if any)
+are bound to the values that result from unpacking a Just/Right.
+Note that a claw with a single variable in
+<code>maybe/either-let*</code> is bound to
+the sole value contained in the Just/Right,
+whereas in <code>maybe/either-let*-values</code>,
+it is bound to a list of all the values, just as
+in a <code>lambda</code> expression,
+a &lt;formals&gt; consisting of a single variable
+is bound to a list of all the procedure arguments.</p>
+<p><code>(exception-&gt;either</code> <em>pred thunk</em><code>)</code></p>
+<p>This procedure is in a sense the inverse of <code>maybe-ref</code>.
+A call to <em>thunk</em> is made, wrapped in an exception handler
+that examines any exception signaled during <em>thunk's</em> execution.
+If the condition object satisfies <em>pred</em>,
+it is wrapped in a Left which is then returned.
+But if no exception is raised, the values returned by <code>thunk</code>
+are wrapped in a Right and the Right is returned.
+</p>
 <h3 id="trivalent-logic">Trivalent logic</h3>
 <p>These procedures provide trivalent logic in the style of SQL on
 Maybe objects containing a single value.  For the purposes of this section,
@@ -489,7 +533,7 @@ The trivalent logic is loosely based on Chicken&#39;s <code>sql-null</code> egg.
 <p>Great thanks to Marc Nieper-Wißkirchen, whose insistence that Scheme's
 multiple arguments and multiple values required an extension of this SRFI
 to handle them correctly.
-Thanks also to the other participants on the SRFI 189 mailing list.</p>
+Thanks also to Shiro Kawai and the other participants on the SRFI 189 mailing list.</p>
 
 <h1>Copyright</h1>
 Copyright &copy; John Cowan, Wolfgang Corcoran-Mathe (2020).
