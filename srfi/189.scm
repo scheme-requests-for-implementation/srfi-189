@@ -625,12 +625,18 @@
 
 ;;;; Syntax
 
+;;; The errors raised when ill-typed values are encountered in the
+;;; folowing macros must satisfy error-object?, and are thus implemented
+;;; with error.  It's implementation-dependent whether assume raises
+;;; the correct kind of object, so we can't use it here.
+
 ;; Maybe analog of if.
 (define-syntax maybe-if
   (syntax-rules ()
     ((_ maybe-expr just-expr nothing-expr)
      (let ((mval maybe-expr))
-       (assume (maybe? mval))
+       (unless (maybe? mval)
+         (error "maybe-if: ill-typed value"))
        (if (just? mval) just-expr nothing-expr)))))
 
 ;; Return the value of expr if it satisfies pred.
@@ -638,7 +644,8 @@
   (syntax-rules ()
     ((_ pred expr)
      (let ((val expr))
-       (assume (pred val))
+       (unless (pred val)
+         (error "ill-typed value" pred val))
        val))))
 
 ;; Maybe analog of and.  Evaluate the argument expressions in order.
@@ -650,10 +657,10 @@
     ((_ maybe-expr) (%guard-value maybe? maybe-expr))
     ((_ maybe-expr maybe-expr* ...)
      (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       (if (just? maybe)
-           (maybe-and maybe-expr* ...)
-           nothing-obj)))))
+       (cond ((just? maybe) (maybe-and maybe-expr* ...))
+             ((nothing? maybe) nothing-obj)
+             (else
+              (error "maybe-and: ill-typed value" maybe? maybe)))))))
 
 ;; Maybe analog of or.  Evaluate the argument expressions in order.
 ;; If any expression evaluates to a Just, return it immediately.
@@ -664,10 +671,10 @@
     ((_ maybe-expr) (%guard-value maybe? maybe-expr))
     ((_ maybe-expr maybe-expr* ...)
      (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       (if (just? maybe)
-           maybe
-           (maybe-or maybe-expr* ...))))))
+       (cond ((just? maybe) maybe)
+             ((nothing? maybe) (maybe-or maybe-expr* ...))
+             (else
+              (error "maybe-or: ill-typed value" maybe? maybe)))))))
 
 ;; Maybe analog of SRFI 2's and-let*.  Each claw evaluates an expression
 ;; or bound variable to a Maybe, or binds the payload of the value of a
@@ -687,12 +694,13 @@
                    (maybe-let* claws . body))))
     ((_ ((maybe-expr) . claws) . body)
      (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       (if (just? maybe) (maybe-let* claws . body) nothing-obj)))
+       (cond ((just? maybe) (maybe-let* claws . body))
+             ((nothing? maybe) nothing-obj)
+             (else (error "ill-typed value" maybe? maybe)))))
     ((_ (id . claws) . body)
-     (begin
-      (assume (maybe? id))
-      (if (just? id) (maybe-let* claws . body) nothing-obj)))
+     (cond ((just? id) (maybe-let* claws . body))
+           ((nothing? id) nothing-obj)
+           (else (error "ill-typed value" maybe? id))))
     ((_ . _)
      (syntax-error "ill-formed maybe-let* form"))))
 
@@ -708,21 +716,22 @@
     ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
     ((_ (id)) (begin (assume (maybe? id)) id))
     ((_ (((id id* ...) maybe-expr) . claws) . body)
-     (maybe-bind maybe-expr
+     (maybe-bind (%guard-value maybe? maybe-expr)
                  (lambda (id id* ...)
                    (maybe-let*-values claws . body))))
     ((_ ((ids maybe-expr) . claws) . body)
-     (maybe-bind maybe-expr
+     (maybe-bind (%guard-value maybe? maybe-expr)
                  (lambda ids
                    (maybe-let*-values claws . body))))
     ((_ ((maybe-expr) . claws) . body)
      (let ((maybe maybe-expr))
-       (assume (maybe? maybe))
-       (if (just? maybe) (maybe-let*-values claws . body) nothing-obj)))
+       (cond ((just? maybe) (maybe-let*-values claws . body))
+             ((nothing? maybe) nothing-obj)
+             (else (error "ill-typed value" maybe? maybe)))))
     ((_ (id . claws) . body)
-     (begin
-      (assume (maybe? id))
-      (if (just? id) (maybe-let*-values claws . body) nothing-obj)))
+     (cond ((just? id) (maybe-let*-values claws . body))
+           ((nothing? id) nothing-obj)
+           (else (error "ill-typed value" maybe? id))))
     ((_ . _)
      (syntax-error "ill-formed maybe-let*-values form"))))
 
@@ -735,10 +744,9 @@
     ((_ either-expr) (%guard-value either? either-expr))
     ((_ either-expr either-expr* ...)
      (let ((either either-expr))
-       (assume (either? either))
-       (if (right? either)
-           (either-and either-expr* ...)
-           either)))))
+       (cond ((right? either) (either-and either-expr* ...))
+             ((left? either) either)
+             (else (error "ill-typed value" either? either)))))))
 
 ;; Either analog of or.  Evaluate the argument expressions in order.
 ;; If any expression evaluates to a Right, return it immediately.
@@ -749,10 +757,9 @@
     ((_ either-expr) (%guard-value either? either-expr))
     ((_ either-expr either-expr* ...)
      (let ((either either-expr))
-       (assume (either? either))
-       (if (right? either)
-           either
-           (either-or either-expr* ...))))))
+       (cond ((right? either) either)
+             ((left? either) (either-or either-expr* ...))
+             (else (error "ill-typed value" either? either)))))))
 
 ;; Either analog of SRFI 2's and-let*.  Each claw evaluates an expression
 ;; or bound variable to a Maybe, or binds the payload of the value of an
@@ -767,17 +774,18 @@
     ((_ ((either-expr))) (%guard-value either? either-expr))
     ((_ (id)) (begin (assume (either? id)) id))
     ((_ ((id either-expr) . claws) . body)
-     (either-bind either-expr
+     (either-bind (%guard-value either? either-expr)
                   (lambda (id)
                     (either-let* claws . body))))
     ((_ ((either-expr) . claws) . body)
      (let ((either either-expr))
-       (assume (either? either))
-       (if (right? either) (either-let* claws . body) either)))
+       (cond ((right? either) (either-let* claws . body))
+             ((left? either) either)
+             (else (error "ill-typed value" either? either)))))
     ((_ (id . claws) . body)
-     (begin
-      (assume (either? id))
-      (if (right? id) (either-let* claws . body) id)))
+     (cond ((right? id) (either-let* claws . body))
+           ((left? id) id)
+           (else (error "ill-typed value" either? either))))
     ((_ . _)
      (syntax-error "ill-formed either-let* form"))))
 
@@ -793,21 +801,22 @@
     ((_ ((either-expr))) (%guard-value either? either-expr))
     ((_ (id)) (begin (assume (either? id)) id))
     ((_ (((id id* ...) either-expr) . claws) . body)
-     (either-bind either-expr
+     (either-bind (%guard-value either? either-expr)
                   (lambda (id id* ...)
                     (either-let*-values claws . body))))
     ((_ ((ids either-expr) . claws) . body)
-     (either-bind either-expr
+     (either-bind (%guard-value either? either-expr)
                   (lambda ids
                     (either-let*-values claws . body))))
     ((_ ((either-expr) . claws) . body)
      (let ((either either-expr))
-       (assume (either? either))
-       (if (right? either) (either-let*-values claws . body) either)))
+       (cond ((right? either) (either-let*-values claws . body))
+             ((left? either) either)
+             (else (error "ill-typed value" either? either)))))
     ((_ (id . claws) . body)
-     (begin
-      (assume (either? id))
-      (if (right? id) (either-let*-values claws . body) id)))
+     (cond ((right? id) (either-let* claws . body))
+           ((left? id) id)
+           (else (error "ill-typed value" either? either))))
     ((_ . _)
      (syntax-error "ill-formed either-let*-values form"))))
 
