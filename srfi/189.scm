@@ -523,7 +523,7 @@
      (with-exception-handler
       (lambda (obj)
         (if (pred obj) (return (left obj)) (raise-continuable obj)))
-      (lambda () (right (thunk)))))))
+      (lambda () (call-with-values thunk right))))))
 
 ;;;; Map, fold, and unfold
 
