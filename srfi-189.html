@@ -318,6 +318,7 @@ and zero values to represent failure.</em></p>
 <p>If <em>maybe/either</em> is a Just/Right, returns the values of its payload;
 otherwise returns no values.</p>
 <p><code>(values-&gt;maybe</code> <em>producer</em><code>)</code><br>
+<code>(values-&gt;maybe</code> <em>producer</em><code>)</code></p>
 <p>These procedures invoke <em>producer</em> with no arguments.
 If no values are returned, Nothing / Left of <em>objs</em> is returned.
 Otherwise the values are wrapped in a Just/Right and returned.</p>
