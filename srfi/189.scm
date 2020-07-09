@@ -514,6 +514,16 @@
    producer
    (lambda objs
      (if (null? objs) (raw-left default-objs) (raw-right objs)))))
+
+(define (exception->either pred thunk)
+  (assume (procedure? pred))
+  (assume (procedure? thunk))
+  (call-with-current-continuation
+   (lambda (return)
+     (with-exception-handler
+      (lambda (obj)
+        (if (pred obj) (return (left obj)) (raise-continuable obj)))
+      (lambda () (right (thunk)))))))
 
 ;;;; Map, fold, and unfold
 
