@@ -52,16 +52,11 @@
 (define (singleton? lis)
   (and (pair? lis) (null? (cdr lis))))
 
-;; Calls proc on the car of args if args is a singleton.  Otherwise,
-;; calls proc with the elements of args as its arguments.
-;; Both proc and args should be identifiers.
 (define-syntax fast-apply
   (syntax-rules ()
     ((_ proc args)
      (if (singleton? args) (proc (car args)) (apply proc args)))))
 
-;; Return the elements of vals as values, with singleton fast path.
-;; vals should be an identifier.
 (define-syntax fast-list->values
   (syntax-rules ()
     ((_ vals)
@@ -625,12 +620,6 @@
 
 ;;;; Syntax
 
-;;; The errors raised when ill-typed values are encountered in the
-;;; folowing macros must satisfy error-object?, and are thus implemented
-;;; with error.  It's implementation-dependent whether assume raises
-;;; the correct kind of object, so we can't use it here.
-
-;; Maybe analog of if.
 (define-syntax maybe-if
   (syntax-rules ()
     ((_ maybe-expr just-expr nothing-expr)
@@ -687,11 +676,17 @@
      (%guard-value maybe? (begin expr1 expr2 ...)))
     ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
     ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
-    ((_ (id)) (begin (assume (maybe? id)) id))
+    ((_ (id))
+     (begin
+      (unless (maybe? id) (error "ill-typed value" maybe? id))
+      id))
     ((_ ((id maybe-expr) . claws) . body)
-     (maybe-bind maybe-expr
-                 (lambda (id)
-                   (maybe-let* claws . body))))
+     (let ((maybe maybe-expr))
+       (cond ((and (just? maybe) (singleton? (just-objs maybe)))
+              (let ((id (car (just-objs maybe))))
+                (maybe-let* claws . body)))
+             ((nothing? maybe) nothing-obj)
+             (else (error "ill-typed value" maybe? maybe)))))
     ((_ ((maybe-expr) . claws) . body)
      (let ((maybe maybe-expr))
        (cond ((just? maybe) (maybe-let* claws . body))
@@ -714,7 +709,10 @@
      (%guard-value maybe? (begin expr1 expr2 ...)))
     ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
     ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
-    ((_ (id)) (begin (assume (maybe? id)) id))
+    ((_ (id))
+     (begin
+      (unless (maybe? id) (error "ill-typed value" maybe? id))
+      id))
     ((_ (((id id* ...) maybe-expr) . claws) . body)
      (maybe-bind (%guard-value maybe? maybe-expr)
                  (lambda (id id* ...)
@@ -772,11 +770,17 @@
      (%guard-value either? (begin expr expr* ...)))
     ((_ ((_ either-expr))) (%guard-value either? either-expr))
     ((_ ((either-expr))) (%guard-value either? either-expr))
-    ((_ (id)) (begin (assume (either? id)) id))
+    ((_ (id))
+     (begin
+      (unless (either? id) (error "ill-typed value" either? id))
+      id))
     ((_ ((id either-expr) . claws) . body)
-     (either-bind (%guard-value either? either-expr)
-                  (lambda (id)
-                    (either-let* claws . body))))
+     (let ((either either-expr))
+       (cond ((and (right? either) (singleton? (right-objs either)))
+              (let ((id (car (right-objs either))))
+                (either-let* claws . body)))
+             ((left? either) either)
+             (else (error "ill-typed value" either? either)))))
     ((_ ((either-expr) . claws) . body)
      (let ((either either-expr))
        (cond ((right? either) (either-let* claws . body))
@@ -799,7 +803,10 @@
      (%guard-value either? (begin expr expr* ...)))
     ((_ ((_ either-expr))) (%guard-value either? either-expr))
     ((_ ((either-expr))) (%guard-value either? either-expr))
-    ((_ (id)) (begin (assume (either? id)) id))
+    ((_ (id))
+     (begin
+      (unless (either? id) (error "ill-typed value" either? id))
+      id))
     ((_ (((id id* ...) either-expr) . claws) . body)
      (either-bind (%guard-value either? either-expr)
                   (lambda (id id* ...)
