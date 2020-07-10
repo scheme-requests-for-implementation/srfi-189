@@ -220,7 +220,7 @@
     (check (left-of-z? (either-let* (left-of-z))) => #t)
     (check (left-of-z?
             (either-let* ((x (right 2)) left-of-z (y (right 3)))
-              (just (* x y))))
+              (right (* x y))))
      => #t))
   ;; let* / bind identities.
   (let ((right-neg (lambda (b) (right (not b)))))
