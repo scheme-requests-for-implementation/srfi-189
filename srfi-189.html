@@ -375,7 +375,7 @@ of <em>successor</em>, it is an error.
 But if the second call to <em>stop?</em> returns true,
 <em>mapper</em> is applied to <em>seeds</em>
 and the results are wrapped in a Just/Right and returned.
-<h3 id="conditional">Conditional syntax</h3>
+<h3 id="syntax">Syntax</h3>
 <p><code>(maybe-if</code> <em>maybe-expr just-expr nothing-expr</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 Equivalent to <code>(if (just? </code><em>maybe-expr</em><code>) </code><em>just-expr nothing-expr</em><code>)</code>,
 except that an error satisfying <code>error-object</code> is signaled
@@ -440,6 +440,16 @@ it is bound to a list of all the values, just as
 in a <code>lambda</code> expression,
 a &lt;formals&gt; consisting of a single variable
 is bound to a list of all the procedure arguments.</p>
+<p><code>(either-guard (</code> <em>pred-expr</em> <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
+<p>The syntactic analogue of <code>exception-either</code>.
+The <em>body</em> is evaluated,
+and the values it produces are wrapped in a Right
+and returned, unless an exception occurs.
+If the condition object that is raised satisfies
+the predicate that is the value of <em>pred-expr</em>,
+the condition object is wrapped in a Left and returned; otherwise
+the condition is reraised as if by <code>raise-continuable</code>.
+</p>
 <h3 id="trivalent-logic">Trivalent logic</h3>
 <p>These procedures provide trivalent logic in the style of SQL on
 Maybe objects containing a single value.  For the purposes of this section,
