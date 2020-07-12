@@ -823,6 +823,10 @@
     ((_ . _)
      (syntax-error "ill-formed either-let*-values form"))))
 
+(define-syntax either-guard
+  (syntax-rules ()
+    ((_ pred-expr expr1 expr2 ...)
+     (exception->either pred-expr (lambda () expr1 expr2 ...)))))
 
 ;;;; Trivalent logic
 
