@@ -307,4 +307,17 @@
                     (either-bind (left #t #t) right-neg-both)
                     (either-let*-values (((b c) (left #t #t))) (right-neg b))
                     (left #t #t))
-     => #t)))
+     => #t))
+
+  (check (left-of-z? (either-guard symbol? (raise 'z))) => #t)
+  (check (right-of-z? (either-guard symbol? 'z)) => #t)
+  (check (guard (obj ((symbol? obj) obj))
+           (either-guard number? (raise-continuable 'z)))
+   => 'z)
+  (check (either= eqv?
+                  (with-exception-handler
+                   not
+                   (lambda ()
+                     (either-guard string? (not (raise-continuable #t)))))
+                  (right #t))
+   => #t))
