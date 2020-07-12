@@ -1,10 +1,18 @@
 ;;;; Conditional syntax
 
+(define-syntax raises-error-object
+  (syntax-rules ()
+    ((_ expr)
+     (guard (obj ((error-object? obj) #t)
+                  (else #f))
+       expr))))
+
 (define (check-syntax)
   (print-header "Testing syntax...")
 
   (check (maybe-if (just #t) #t #f) => #t)
   (check (maybe-if (nothing) #t #f) => #f)
+  (check (raises-error-object (maybe-if #t #t #f)) => #t)
 
   ;;; maybe-and, -or, -let*, and -let*-values
 
@@ -23,11 +31,13 @@
                  (maybe-and (nothing) (just #t))
                  (nothing))
    => #t)
+  (check (raises-error-object (maybe-and #t (just #t))) => #t)
 
   (check (nothing? (maybe-or))                               => #t)
   (check (just-of-z? (maybe-or (just 'z)))                   => #t)
   (check (just-of-z? (maybe-or (nothing) (just 'z)))         => #t)
   (check (nothing? (maybe-or (nothing) (nothing) (nothing))) => #t)
+  (check (raises-error-object (maybe-or (nothing) #t))       => #t)
 
   (check (just? (maybe-let* ())) => #t)
   (check (just-of-z? (maybe-let* (((just 'z))))) => #t)
@@ -83,6 +93,10 @@
                    (maybe-let* ((b (nothing))) (not b))
                    (nothing))
      => #t))
+   (check (raises-error-object (maybe-let* ((b #t)) 'z)) => #t)
+   (check (raises-error-object
+           (maybe-let* ((b (just #t)) ('nothing)) #t))
+    => #t)
 
   (check (just? (maybe-let*-values ())) => #t)
   (check (just-of-z? (maybe-let*-values (((just 'z))))) => #t)
@@ -157,6 +171,10 @@
                    (maybe-let*-values (((b c) (nothing))) (neg-both b c))
                    (nothing))
      => #t))
+   (check (raises-error-object (maybe-let*-values (((b) #t)) #t)) => #t)
+   (check (raises-error-object
+          (maybe-let*-values (((b) (just #t)) ('nothing)) #t))
+    => #t)
 
   ;;; either-and, -or, and -let*
 
@@ -175,11 +193,13 @@
                   (either-and (left #f) (right #t))
                   (left #f))
    => #t)
+  (check (raises-error-object (either-and #t (right #t))) => #t)
 
   (check (left? (either-or))                              => #t)
   (check (right-of-z? (either-or (right 'z)))             => #t)
   (check (right-of-z? (either-or (left) (right 'z)))      => #t)
   (check (left-of-z? (either-or (left) (left) (left 'z))) => #t)
+  (check (raises-error-object (either-or (left #f) #t))   => #t)
 
   (check (right? (either-let* ())) => #t)
   (check (right-of-z? (either-let* (((right 'z))))) => #t)
@@ -237,6 +257,10 @@
                     (either-let* ((b (left #t))) (not b))
                     (left #t))
      => #t))
+   (check (raises-error-object (either-let* ((b #t)) 'z)) => #t)
+   (check (raises-error-object
+          (either-let* ((b (right #t)) ('left)) #t))
+    => #t)
 
   (check (right? (either-let*-values ())) => #t)
   (check (right-of-z? (either-let*-values (((right 'z))))) => #t)
@@ -315,6 +339,12 @@
                       (neg-both b c))
                     (left #t #t))
      => #t))
+   (check (raises-error-object
+          (either-let*-values (((b) #t)) 'z))
+    => #t)
+   (check (raises-error-object
+           (either-let*-values (((b) (right #t)) ('left)) 'z))
+    => #t)
 
   (check (left-of-z? (either-guard symbol? (raise 'z))) => #t)
   (check (right-of-z? (either-guard symbol? 'z)) => #t)
