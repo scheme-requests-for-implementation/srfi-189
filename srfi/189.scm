@@ -513,12 +513,8 @@
 (define (exception->either pred thunk)
   (assume (procedure? pred))
   (assume (procedure? thunk))
-  (call-with-current-continuation
-   (lambda (return)
-     (with-exception-handler
-      (lambda (obj)
-        (if (pred obj) (return (left obj)) (raise-continuable obj)))
-      (lambda () (call-with-values thunk right))))))
+  (guard (obj ((pred obj) (left obj)))
+    (call-with-values thunk right)))
 
 ;;;; Map, fold, and unfold
 
