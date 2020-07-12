@@ -228,7 +228,7 @@
    => #t)
   ;; Behavior of bound-variable claws.
   (let ((right-of-z (right 'z)) (left-of-z (left 'z)))
-    (check (right-of-z? (either-let* (right-of-z) right-of-z)) => #t)
+    (check (right-of-z? (either-let* (right-of-z) 'z)) => #t)
     (check (either= eqv?
                     (either-let* ((x (right 2))
                                   right-of-z
