@@ -51,6 +51,7 @@
           maybe->list-truth either->list-truth list-truth->maybe
           list-truth->either truth->either
           either->generation generation->either
+          exception->either either-guard
 
           maybe-map maybe-fold maybe-unfold either-map either-fold
           either-unfold
