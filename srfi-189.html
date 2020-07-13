@@ -344,7 +344,8 @@ otherwise, Nothing is returned.</p>
 A call to <em>thunk</em> is made, wrapped in an exception handler
 that examines any exception signaled during <em>thunk's</em> execution.
 If the condition object satisfies <em>pred</em>,
-it is wrapped in a Left which is then returned.
+it is wrapped in a Left which is then returned;
+if it does not, the exception is reraised.
 But if no exception is raised, the values returned by <code>thunk</code>
 are wrapped in a Right and the Right is returned.
 </p>
