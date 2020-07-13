@@ -416,7 +416,24 @@
   (check (right-of-z? (values->either (lambda ()
                                         (either->values (right 'z)))
                                       #f))
-    => #t))
+    => #t)
+
+  (check (left-of-z? (exception->either symbol? (lambda () (raise 'z))))
+   => #t)
+  (check (right-of-z? (exception->either symbol? (lambda () 'z))) => #t)
+  (check (guard (obj ((symbol? obj) obj))
+           (exception->either number?
+                              (lambda () (raise-continuable 'z))))
+   => 'z)
+  (check (either= eqv?
+                  (with-exception-handler
+                   not
+                   (lambda ()
+                     (exception->either string?
+                                        (lambda ()
+                                          (not (raise-continuable #t))))))
+                  (right #t))
+   => #t))
 
 ;;;; Map, fold, and unfold
 
