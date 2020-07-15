@@ -105,6 +105,8 @@ and returns zero or more values wrapped in a single Maybe or Either container.</
 <p><em>list</em>: A Scheme list.</p>
 <p><em>producer</em>: A procedure that accepts no arguments and returns
 some number of values.</p>
+<p>It is an error (unless otherwise noted) if the procedures are passed arguments
+that do not have the type implied by the argument names.</p>
 <h3 id="constructors">Constructors</h3>
 <p><code>(just</code> <em>obj</em> ...<code>)</code></p>
 <p>Monadic pure.  Returns the <em>objs</em> wrapped in a Just.</p>
