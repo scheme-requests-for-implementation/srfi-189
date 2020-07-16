@@ -300,7 +300,7 @@ It is an error to mutate the result of this procedure.</p>
 <p>If <em>list-or-false</em> is <code>#f</code>,
 returns Nothing / a Left of <em>objs</em>;
 otherwise, wraps the list elements in a Just/Right and returns it.</p>
-<p><span class="big">&#9758;</span> The following procedures interface between the Maybe protocol
+<p><span class="big">&#9758;</span> The following procedures interface between the Maybe and Either protocols
 and the <em>generation</em> protocol, which uses an end-of-file object
 to represent failure and any other value to represent success.</p>
 <p><code>(maybe-&gt;generation</code> <em>maybe</em><code>)</code><br>
@@ -310,8 +310,8 @@ It is an error if the Just/Right does not have exactly one value.
 If <em>maybe/either</em> is Nothing / a Left,
 then an end-of-file object is returned.</p>
 <p><code>(generation-&gt;maybe</code> <em>obj</em><code>)</code><br>
-<code>(generation-&gt;either</code> <em>obj</em><code>)</code></p>
-If <em>obj</em> is an end-of-file object, return Nothing / a Left of <em>objs</em>.
+<code>(generation-&gt;either</code> <em>obj fail-objs</em> ...<code>)</code></p>
+If <em>obj</em> is an end-of-file object, return Nothing / a Left of <em>fail-objs</em>.
 Otherwise, return <em>obj</em> wrapped in a Just/Right.
 <p><span class="big">&#9758;</span> The following procedures interface between the Maybe and Either protocols
 and the <em>values</em> protocol, which returns one or more values to represent success
@@ -321,9 +321,9 @@ and zero values to represent failure.</p>
 <p>If <em>maybe/either</em> is a Just/Right, returns the values of its payload;
 otherwise returns no values.</p>
 <p><code>(values-&gt;maybe</code> <em>producer</em><code>)</code><br>
-<code>(values-&gt;either</code> <em>producer</em><code>)</code></p>
+<code>(values-&gt;either</code> <em>producer fail-obj</em> ...<code>)</code></p>
 <p>These procedures invoke <em>producer</em> with no arguments.
-If no values are returned, Nothing / Left of <em>objs</em> is returned.
+If no values are returned, Nothing / Left of <em>fail-objs</em> is returned.
 Otherwise the values are wrapped in a Just/Right and returned.</p>
 <p><span class="big">&#9758;</span> The following procedures interface between the Maybe protocol
 and the <em>two-values</em> protocol, which returns
@@ -445,7 +445,7 @@ in a <code>lambda</code> expression,
 a &lt;formals&gt; consisting of a single variable
 is bound to a list of all the procedure arguments.</p>
 <p><code>(either-guard (</code> <em>pred-expr</em> <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
-<p>The syntactic analogue of <code>exception-either</code>.
+<p>The syntactic analogue of <code>exception-&gt;either</code>.
 The <em>body</em> is evaluated,
 and the values it produces are wrapped in a Right
 and returned, unless an exception occurs.
