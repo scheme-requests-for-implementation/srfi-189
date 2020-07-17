@@ -667,15 +667,8 @@
 ;; gives a Nothing, the whole expression evaluates to Nothing.
 (define-syntax maybe-let*
   (syntax-rules ()
-    ((_ ()) (just unspecified))
     ((_ () expr1 expr2 ...)
      (call-with-values (lambda () expr1 expr2 ...) just))
-    ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
-    ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
-    ((_ (id))
-     (begin
-      (unless (maybe? id) (error "ill-typed value" maybe? id))
-      id))
     ((_ ((id maybe-expr) . claws) . body)
      (let ((maybe maybe-expr))
        (cond ((and (just? maybe) (singleton? (just-objs maybe)))
@@ -700,15 +693,8 @@
 ;; manner of let-values.
 (define-syntax maybe-let*-values
   (syntax-rules ()
-    ((_ ()) (just unspecified))
     ((_ () expr1 expr2 ...)
      (call-with-values (lambda () expr1 expr2 ...) just))
-    ((_ ((_ maybe-expr))) (%guard-value maybe? maybe-expr))
-    ((_ ((maybe-expr))) (%guard-value maybe? maybe-expr))
-    ((_ (id))
-     (begin
-      (unless (maybe? id) (error "ill-typed value" maybe? id))
-      id))
     ((_ (((id id* ...) maybe-expr) . claws) . body)
      (maybe-bind (%guard-value maybe? maybe-expr)
                  (lambda (id id* ...)
@@ -761,15 +747,8 @@
 ;; gives a Left, then the whole expression evaluates to that Left.
 (define-syntax either-let*
   (syntax-rules ()
-    ((_ ()) (right unspecified))
     ((_ () expr1 expr2 ...)
      (call-with-values (lambda () expr1 expr2 ...) right))
-    ((_ ((_ either-expr))) (%guard-value either? either-expr))
-    ((_ ((either-expr))) (%guard-value either? either-expr))
-    ((_ (id))
-     (begin
-      (unless (either? id) (error "ill-typed value" either? id))
-      id))
     ((_ ((id either-expr) . claws) . body)
      (let ((either either-expr))
        (cond ((and (right? either) (singleton? (right-objs either)))
@@ -794,15 +773,8 @@
 ;; manner of let-values.
 (define-syntax either-let*-values
   (syntax-rules ()
-    ((_ ()) (right unspecified))
     ((_ () expr1 expr2 ...)
      (call-with-values (lambda () expr1 expr2 ...) right))
-    ((_ ((_ either-expr))) (%guard-value either? either-expr))
-    ((_ ((either-expr))) (%guard-value either? either-expr))
-    ((_ (id))
-     (begin
-      (unless (either? id) (error "ill-typed value" either? id))
-      id))
     ((_ (((id id* ...) either-expr) . claws) . body)
      (either-bind (%guard-value either? either-expr)
                   (lambda (id id* ...)
