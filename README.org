@@ -10,6 +10,8 @@ This repository hosts [[https://srfi.schemers.org/srfi-189/][SRFI 189]]: Maybe a
 
 This SRFI is in /final/ status.
 
+See also [[https://srfi.schemers.org/srfi-195/][SRFI 195: Multiple-value boxes]].
+
 The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-189/srfi-189.html][SRFI Document]].
 
 If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[https://srfi.schemers.org/srfi-189/][join the SRFI-189 mailing list]] and send your message there.
