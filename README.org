@@ -4,7 +4,7 @@
 
 
 
-keywords: [[https://srfi.schemers.org/?keywords=data-structure][Data Structure]]
+keywords: [[https://srfi.schemers.org/?keywords=data-structure][Data Structure]], [[https://srfi.schemers.org/?keywords=multiple-value-returns][Multiple Value Returns]]
 
 This repository hosts [[https://srfi.schemers.org/srfi-189/][SRFI 189]]: Maybe and Either: optional container types, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
