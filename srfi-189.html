@@ -28,6 +28,9 @@
   <li>Draft #7 published: 2020-06-14</li>
   <li>Draft #8 published: 2020-07-01</li>
   <li>Finalized: 2020-07-14</li>
+  <li>Revised to fix errata:
+    <ul>
+      <li>2020-12-02 (Fix typo in specification of <a href="#accessors"><code>either-ref/default</code></a>.)</li></ul></li>
 </ul>
 
 <h2 id="abstract">Abstract</h2>
@@ -171,7 +174,7 @@ tail-calls the procedure <em>failure</em>
 on the values of its payload and returns the result.
 The default value of <em>success</em> is <em>values</em>.</p>
 <p><code>(maybe-ref/default</code> <em>maybe default</em> ...<code>)</code><br>
-<code>(either-ref/default</code> <em>maybe default</em> ...<code>)</code></p>
+<code>(either-ref/default</code> <em>either default</em> ...<code>)</code></p>
 <p>If <em>maybe/either</em> is a Just/Right, returns the values of its payload; otherwise
 returns the <em>defaults</em> as multiple values.</p>
 <h3 id="join-and-bind">Join and bind</h3>
