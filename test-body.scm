@@ -23,34 +23,6 @@
 (import (scheme write))
 (import (srfi 189))
 
-(cond-expand
-  ((library (srfi 78))
-   (import (srfi 78)))
-  (else
-    (begin
-      (define-syntax check
-        (syntax-rules (=>)
-          ((check expr)
-           (check expr => #t))
-          ((check expr => expected)
-           (if (equal? expr expected)
-             (begin
-               (display 'expr)
-               (display " => ")
-               (display expected)
-               (display " ; correct")
-               (newline))
-             (begin
-               (display "FAILED: for ")
-               (display 'expr)
-               (display " expected ")
-               (display expected)
-               (display " but got ")
-               (display expr)
-               (newline))
-             ))))
-      (define (check-report) #t))))
-
 ;;;; Utility
 
 (define (identity x) x)
