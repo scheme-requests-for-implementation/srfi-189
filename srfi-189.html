@@ -385,7 +385,7 @@ and the results are wrapped in a Just/Right and returned.
 <h3 id="syntax">Syntax</h3>
 <p><code>(maybe-if</code> <em>maybe-expr just-expr nothing-expr</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 Equivalent to <code>(if (just? </code><em>maybe-expr</em><code>) </code><em>just-expr nothing-expr</em><code>)</code>,
-except that an error satisfying <code>error-object</code> is signaled
+except that an error satisfying <code>error-object?</code> is signaled
 if <em>maybe-expr</em> does not evaluate to a Maybe.
 <p><code>(maybe-and</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-and</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]</p>
@@ -396,7 +396,7 @@ Otherwise, the last Just / Right is returned.
 If there are no <em>exprs</em>,
 then a Just/Right of an unspecified value is returned.
 If an <em>expr</em> does not evaluate to a Maybe/Either,
-an error satisfying <code>error-object</code> is signaled.
+an error satisfying <code>error-object?</code> is signaled.
 <p><code>(maybe-or</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-or</code> <em>expr</em> ...<code>)</code>&nbsp;&nbsp;[syntax]</p>
 The <em>exprs</em> are evaluated in order.
@@ -406,7 +406,7 @@ Otherwise, the last Nothing/Left is returned.
 If there are no <em>exprs</em>,
 then Nothing / a Left of an unspecified value is returned.
 If an <em>expr</em> does not evaluate to a Maybe/Either,
-an error satisfying <code>error-object</code> is signaled.
+an error satisfying <code>error-object?</code> is signaled.
 <p><code>(maybe-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]<br>
 <code>(either-let* (</code> <em>claw</em> ... <code>) .</code> <em>body</em><code>)</code>&nbsp;&nbsp;[syntax]</p>
 <p>The Maybe/Either equivalent of <code>and-let*</code> from
@@ -414,7 +414,7 @@ an error satisfying <code>error-object</code> is signaled.
 However, instead of testing whether a <em>claw</em> is true or false,
 it tests whether it is Just/Right or Nothing/Left.
 If a <em>claw</em> does not evaluate to a Maybe/Either,
-an error satisfying <code>error-object</code> is signaled.
+an error satisfying <code>error-object?</code> is signaled.
 The same is true if a <em>claw</em> evaluates to a Just or Right
 that wraps zero values or more than one value.</p>
 <p>A <em>claw</em> is either a bound identifier,
