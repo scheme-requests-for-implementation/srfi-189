@@ -116,9 +116,6 @@
 (define (maybe? obj)
   (or (just? obj) (nothing? obj)))
 
-(define (nothing? obj)
-  (eqv? obj nothing-obj))
-
 ;; True if all the maybes are Nothing, or if all are Justs containing
 ;; the same number of values which are element-wise equal in the sense
 ;; of `equal'.
