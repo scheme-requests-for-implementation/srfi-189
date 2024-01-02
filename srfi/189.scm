@@ -791,7 +791,7 @@
     ((_ (id . claws) . body)
      (cond ((right? id) (either-let*-values claws . body))
            ((left? id) id)
-           (else (error "ill-typed value" either? either))))
+           (else (error "ill-typed value" either? id))))
     ((_ . _)
      (syntax-error "ill-formed either-let*-values form"))))
 
